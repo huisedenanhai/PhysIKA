@@ -8,7 +8,6 @@
 #include <Dynamics/Sand/SandGrid.h>
 #include <Dynamics/Sand/SandSimulator.h>
 #include <Framework/Framework/SceneGraph.h>
-#include "DataTypes.h"
 #include "GUI/GlutGUI/GLApp.h"
 #include "Rendering/PointRenderModule.h"
 #include "Dynamics/Sand/PBDSandSolver.h"
@@ -20,7 +19,6 @@
 #include "Dynamics\Sand\ParticleSandRigidInteraction.h"
 #include "Dynamics/Sand/SandVisualPointSampleModule.h"
 #include "IO/Image_IO/HeightFieldLoader.h"
-#include "sandRigidCommon.h"
 #include "GUI/GlutGUI/GLApp.h"
 
 #include "math.h"
@@ -56,6 +54,31 @@ void GetRigidBodyGlobalPositionRotation(const T& rb, Vec3& pos, Quat& rot)
     auto rotation = rb->getGlobalQ();
     pos           = FromPhysIKA(position);
     rot           = FromPhysIKA(rotation);
+}
+
+bool ComputeBoundingBox(PhysIKA::Vector3f& center, PhysIKA::Vector3f& boxsize, const std::vector<PhysIKA::Vector3f>& vertices)
+{
+    if (vertices.size() <= 0)
+        return false;
+
+    boxsize                = PhysIKA::Vector3f();
+    PhysIKA::Vector3f bmin = vertices[0];
+    PhysIKA::Vector3f bmax = vertices[0];
+    for (int i = 0; i < vertices.size(); ++i)
+    {
+        const PhysIKA::Vector3f& ver = vertices[i];
+        bmin[0]                      = min(bmin[0], ver[0]);
+        bmin[1]                      = min(bmin[1], ver[1]);
+        bmin[2]                      = min(bmin[2], ver[2]);
+
+        bmax[0] = max(bmax[0], ver[0]);
+        bmax[1] = max(bmax[1], ver[1]);
+        bmax[2] = max(bmax[2], ver[2]);
+    }
+
+    center  = (bmin + bmax) * 0.5;
+    boxsize = bmax - bmin;
+    return true;
 }
 }  // namespace
 
@@ -328,8 +351,6 @@ VPE::PhysIKACar::PhysIKACar()
 
 inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInfo& info)  //info这一系列参数都传进去了吗？没有，甚至那俩函数功能都没有合并进去！
 {
-    //setHeight
-
     //这里前面的两行就设置成员变量缓存吧，后面剪切到build里
     sandinfo.nx               = info.height_resolution_x;
     sandinfo.ny               = info.height_resolution_y;
@@ -390,10 +411,6 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
 
     auto sandinitfun = [](PhysIKA::PBDSandSolver* solver) { solver->freeFlow(1); };
     psandSolver->setPostInitializeFun(std::bind(sandinitfun, std::placeholders::_1));
-
-    printf("%f\n%f", landHeight.Nx(), landHeight.Ny());  //是0！知道了！landHeight在set函数里面初始化，实际是初始化成功之后没能传进来！
-                                                         //合并函数结构体整体传参之后，这里咋还是0，0呢？！因为合并传参之后忘记合并函数功能了。。尴尬
-
     psandSolver->setLand(landHeight);  //cy:是这里出的bug  wkm:因为没有初始化landHeight，需要调用前文函数！但现在调了还是报错，，可能没调成功？
 
     // TODO 渲染全部删掉
@@ -442,23 +459,21 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
     {
         for (int j = 0; j < sandinfo.ny; ++j)
         {
-            if (landHeight(i, j) < info.sand_layer_thickness)
+            PhysIKA::Vector3d centerij = landHeight.gridCenterPosition(i, j);  //这里先把硬地面中心作为沙地中心
+            for (int ii = 0; ii < 2; ++ii)
             {
-                PhysIKA::Vector3d centerij = landHeight.gridCenterPosition(i, j);  //这里先把硬地面中心作为沙地中心
-                for (int ii = 0; ii < 2; ++ii)
-                    for (int jj = 0; jj < 2; ++jj)
-                    {
-                        PhysIKA::Vector3d curp = centerij;  //沙地中心
-                        curp[0] -= sandinfo.griddl / 2.0;   //这四行调了一下沙地中心
-                        curp[2] -= sandinfo.griddl / 2.0;
-                        curp[0] += ii * spacing2 + spacing2 / 2.0 * (1.0 + u(e));  //这里用到均匀分布？用途待研究
-                        curp[2] += jj * spacing2 + spacing2 / 2.0 * (1.0 + u(e));
-                        particlePos.push_back(curp);  //push_back代表在vector末尾再加一个元素，所以这双层循环相当于给vector赋值
-                        particleType.push_back(PhysIKA::ParticleType::SAND);
-                        particleMass.push_back(m0);  //这仨vector容量大小都是高度场网格数量
-                    }
+                for (int jj = 0; jj < 2; ++jj)
+                {
+                    PhysIKA::Vector3d curp = centerij;  //沙地中心
+                    curp[0] -= sandinfo.griddl / 2.0;   //这四行调了一下沙地中心
+                    curp[2] -= sandinfo.griddl / 2.0;
+                    curp[0] += ii * spacing2 + spacing2 / 2.0 * (1.0 + u(e));  //这里用到均匀分布？用途待研究
+                    curp[2] += jj * spacing2 + spacing2 / 2.0 * (1.0 + u(e));
+                    particlePos.push_back(curp);  //push_back代表在vector末尾再加一个元素，所以这双层循环相当于给vector赋值
+                    particleType.push_back(PhysIKA::ParticleType::SAND);
+                    particleMass.push_back(m0);  //这仨vector容量大小都是高度场网格数量
+                }
             }
-            //printf("%d\n",particlePos.size());
         }
     }
 
@@ -520,7 +535,7 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
         chassisTri = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();  //底盘上设置三角网格
         chassisTri->setPoints(chassisLoader.getVertexList());
         chassisTri->setTriangles(chassisLoader.getFaceList());
-        computeBoundingBox(chassisCenter, chassisSize, chassisLoader.getVertexList());  //计算包围盒，点进去就是算法//问一下啥是计算包围盒？？？
+        ComputeBoundingBox(chassisCenter, chassisSize, chassisLoader.getVertexList());  //计算包围盒，点进去就是算法//问一下啥是计算包围盒？？？
                                                                                         //std::cout<<chassisCenter[0]<<' '<<chassisCenter[1]<<' '<<chassisCenter[2]<<std::endl;//这两行是常悦帮忙写的，嘱咐我要多练多谢多改代码！
                                                                                         //chassisCenter *= scale3f;//这里可以实验一下啊，输出一下，初值时是多少，乘完是多少
                                                                                         //std::cout<<chassisCenter[0]<<' '<<chassisCenter[1]<<' '<<chassisCenter[2]<<std::endl;//与我所想完全一致，这个三维数组未赋初值，开始是0，乘完还是0
@@ -545,7 +560,7 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
             wheelTri[i] = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
             wheelTri[i]->setPoints(wheelLoader.getVertexList());  //这两行是啥？
             wheelTri[i]->setTriangles(wheelLoader.getFaceList());
-            computeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());  //计算包围盒？？？
+            ComputeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());  //计算包围盒？？？
             wheelTri[i]->scale(scale3f);
             wheelTri[i]->translate(-wheelCenter[i]);
 
