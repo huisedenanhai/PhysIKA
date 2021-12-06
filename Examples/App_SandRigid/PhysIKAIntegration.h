@@ -31,11 +31,11 @@ enum class PhysIKACarType
 };
 
 struct PhysIKACarComponent
-{                               //对应
-    Vec3        translation{};  //组件相对于车中心的平移
+{                               //
+    Vec3        translation{};  //
     Vec3        scale{ 1.0f, 1.0f, 1.0f };
     Quat        RelRotation{ 0.0f, 0.0f, 0.0f, 1.0f };
-    std::string model_path{};  //只能放在下面这个结构体里面
+    std::string model_path{};  //
     std::string sdf_path{};
 };
 
@@ -54,8 +54,8 @@ struct PhysIKACarCreateInfo
 
     float    car_mass                = 1000.0;
     float    max_speed               = 20.0;
-    float    forward_force           = 2000.0;  //牵引力恒定就好
-    float    steering_speed          = 1.0;     //打轮速度
+    float    forward_force           = 2000.0;  //
+    float    steering_speed          = 1.0;     //
     float    steering_lower          = -0.5;
     float    steering_upper          = 0.5;
     float    wheel_mass              = 50.0;
@@ -84,12 +84,12 @@ class PhysIKACar
 public:
     PhysIKACar();
     ~PhysIKACar();
-    //下面四个都是绝对的
-    //wheel_index是真输入，有&引用普遍是输出，除了const//输出在参数上
+    //
+    //wheel_index&const//
     void GetChassisPositionRotation(Vec3& pos, Quat& rot);
     void GetWheelPositionRotation(uint32_t wheel_index, Vec3& pos, Quat& rot);
 
-    void SetChassisPositionRotation(const Vec3& pos, const Quat& rot);  //我觉得，set部分就set carPosition就行了。
+    void SetChassisPositionRotation(const Vec3& pos, const Quat& rot);  //setset carPosition
     void SetWheelPositionRotation(uint32_t wheel_index, const Vec3& pos, const Quat& rot);
 
     // The center of Sand simulation region should also be updated by this method.
@@ -105,7 +105,7 @@ public:
 };
 
 struct SandSimulationRegionCreateInfo
-{  //这一堆，好像没有传到create里面去！！！！
+{  //create
     double total_width_in_meter;
     double total_height_in_meter;
     float  sand_layer_thickness;
@@ -123,18 +123,16 @@ class SandSimulationRegion
 public:
     SandSimulationRegion();
     std::shared_ptr<PhysIKA::Node> GetRoot();
-    //连好节点的root的shearedptr输出来
+    //rootshearedptr
     //void SetHeight(double *data, int resolution_x, int resolution_y);
     //input height_data
-    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle);  //car_handle是啥？序号
-    //输入小车序号，输出小车ptr
-    std::vector<VPE::Vec3> GetSandParticles();  //由粒子序号获得粒子信息
-                                                //输出沙子位置数组，particle_num也是输出
+    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle);  //car_handle
+    //ptr
+    std::vector<VPE::Vec3> GetSandParticles();  //
+                                                //particle_num
     ~SandSimulationRegion();
     //uint64_t AddCar(const VPE::PhysIKACarCreateInfo& carinfo);
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
-    //类似构造函数，工厂方法
-    //private://ldj
     struct Impl;
     std::unique_ptr<Impl> _impl;
 
