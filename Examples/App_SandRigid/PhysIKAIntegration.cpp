@@ -9,10 +9,8 @@
 #include <Dynamics/Sand/SandSimulator.h>
 #include <Framework/Framework/SceneGraph.h>
 #include "GUI/GlutGUI/GLApp.h"
-#include "Rendering/PointRenderModule.h"
 #include "Dynamics/Sand/PBDSandSolver.h"
 #include "Dynamics/Sand/PBDSandRigidInteraction.h"
-#include "Rendering/RigidMeshRender.h"
 #include "Dynamics/RigidBody/RigidUtil.h"
 #include "Dynamics/HeightField/HeightFieldMesh.h"
 #include "IO/Surface_Mesh_IO/ObjFileLoader.h"
@@ -22,7 +20,12 @@
 #include "GUI/GlutGUI/GLApp.h"
 
 #include "math.h"
-//bugvector
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+#include <Rendering/RigidMeshRender.h>
+#include <Rendering/PointRenderModule.h>
+#endif
+
 namespace VPE {
 using namespace PhysIKA;
 
@@ -106,12 +109,14 @@ public:
     PhysIKA::Vector3f                                         carPosition;
     PhysIKA::Quaternion<float>                                carRotation;
     std::vector<PhysIKA::RigidBody2_ptr>                      m_rigids;
-    std::vector<std::shared_ptr<PhysIKA::RigidMeshRender>>    m_rigidRenders;
 
-    PhysIKA::SandGridInfo               sandinfo;     //
-    PhysIKA::HostHeightField1d          landHeight;   //
-    std::vector<PhysIKA::Vector3d>      particlePos;  //
-    shared_ptr<SandSimulationRegion>    m_instance;
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+    std::vector<std::shared_ptr<PhysIKA::RigidMeshRender>> m_rigidRenders;
+#endif
+
+    PhysIKA::SandGridInfo               sandinfo;    //
+    PhysIKA::HostHeightField1d          landHeight;  //
+    std::vector<PhysIKA::Vector3d>      particlePos;
     std::shared_ptr<PhysIKA::PBDSolver> rigidSolver;
 
     std::shared_ptr<PhysIKA::Node> GetRoot()  //rootParticleSandRigidInteraction
@@ -148,7 +153,7 @@ public:
         return a;
     }
 
-    std::shared_ptr<SandSimulationRegion> Init(const SandSimulationRegionCreateInfo& info);
+    void Init(const SandSimulationRegionCreateInfo& info);
 };
 
 std::shared_ptr<PhysIKA::Node> SandSimulationRegion::GetRoot()
@@ -346,17 +351,17 @@ VPE::PhysIKACar::PhysIKACar()
     _impl2 = std::make_unique<Impl2>();
 }
 
-inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInfo& info)  //info
+inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInfo& info)  //info
 {
     //build
     sandinfo.nx               = info.height_resolution_x;
     sandinfo.ny               = info.height_resolution_y;
-    sandinfo.griddl           = info.total_width_in_meter / info.height_resolution_x;  //
-    sandinfo.mu               = 0.7;                                                   //,//
-    sandinfo.drag             = 0.95;                                                  //
-    sandinfo.slide            = 10 * sandinfo.griddl;                                  //10100
-    sandinfo.sandRho          = 1000.0;                                                ////
-    double sandParticleHeight = 0.05;                                                  //0.05
+    sandinfo.griddl           = info.physical_size_x / info.height_resolution_x;  //
+    sandinfo.mu               = 0.7;                                              //,//
+    sandinfo.drag             = 0.95;                                             //
+    sandinfo.slide            = 10 * sandinfo.griddl;                             //10100
+    sandinfo.sandRho          = 1000.0;                                           ////
+    double sandParticleHeight = 0.05;                                             //0.05
 
     landHeight.resize(sandinfo.nx, sandinfo.ny);
     landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);
@@ -420,10 +425,12 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
         PhysIKA::HeightFieldMesh hfmesh;
         hfmesh.generate(triset, hfland);
 
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
         // Mesh renderer.
         auto renderModule = std::make_shared<PhysIKA::RigidMeshRender>(landrigid->getTransformationFrame());
         renderModule->setColor(PhysIKA::Vector3f(210.0 / 255.0, 180.0 / 255.0, 140.0 / 255.0));
         landrigid->addVisualModule(renderModule);
+#endif
     }
 
     // Sand height 5
@@ -474,21 +481,25 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
     //vectorsandinfo.nx0
     std::cout << "Particle number:   " << particlePos.size() << std::endl;
 
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     // 10 Rendering module of simulator.
     auto pRenderModule = std::make_shared<PhysIKA::PointRenderModule>();
     pRenderModule->setSphereInstaceSize(sandinfo.griddl * 0.5);
     pRenderModule->setColor(PhysIKA::Vector3f(1.0f, 1.0f, 122.0f / 255.0f));
     sandSim->addVisualModule(pRenderModule);
+#endif
 
     // 11 topology
     auto topology = std::make_shared<PhysIKA::PointSet<PhysIKA::DataType3f>>();
     sandSim->setTopologyModule(topology);
     topology->getPoints().resize(1);
 
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     // 12 Render point sampler (module).
     auto psampler = std::make_shared<PhysIKA::ParticleSandRenderSampler>();
     psampler->Initialize(psandSolver);
     sandSim->addCustomModule(psampler);
+#endif
 
     /// ------  Rigid ------------
     //13 PBD simulation
@@ -608,9 +619,12 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
 
         // Add visualization module and topology module.
         m_car[u]->m_chassis->setTopologyModule(chassisTri);
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
         auto chassisRender = std::make_shared<PhysIKA::RigidMeshRender>(m_car[0]->m_chassis->getTransformationFrame());
         chassisRender->setColor(PhysIKA::Vector3f(0.8, std::rand() % 1000 / ( double )1000, 0.8));
+        m_rigidRenders.push_back(chassisRender);
         m_car[u]->m_chassis->addVisualModule(chassisRender);
+#endif
         interactionSolver->addSDF(chassisSDF, m_car[0]->m_chassis->getId());
 
         // Bounding radius of chassis.
@@ -618,14 +632,16 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
         m_car[u]->m_chassis->setRadius(chassisRadius);
 
         m_rigids.push_back(m_car[u]->m_chassis);
-        m_rigidRenders.push_back(chassisRender);
 
         for (int i = 0; i < 4; ++i)  //
         {
             m_car[u]->m_wheels[i]->setTopologyModule(wheelTri[i]);
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
             auto renderModule = std::make_shared<PhysIKA::RigidMeshRender>(m_car[u]->m_wheels[i]->getTransformationFrame());
             renderModule->setColor(PhysIKA::Vector3f(0.8, std::rand() % 1000 / ( double )1000, 0.8));
             m_car[u]->m_wheels[i]->addVisualModule(renderModule);
+            m_rigidRenders.push_back(renderModule);
+#endif
             interactionSolver->addSDF(wheelSDF[i], m_car[u]->m_wheels[i]->getId());
 
             // Bounding radius of chassis.
@@ -633,12 +649,9 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
             m_car[u]->m_wheels[i]->setRadius(wheelRadius);
 
             m_rigids.push_back(m_car[u]->m_wheels[i]);
-            m_rigidRenders.push_back(renderModule);
         }
     }
     interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
-
-    return m_instance;  //
 }
 
 }  // namespace VPE

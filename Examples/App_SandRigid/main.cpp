@@ -38,8 +38,8 @@ int main()
     }
 
     VPE::SandSimulationRegionCreateInfo b;
-    b.total_width_in_meter  = 10;
-    b.total_height_in_meter = 10;
+    b.physical_size_x  = 10;
+    b.physical_size_y = 10;
     b.sand_layer_thickness  = 0.02;
     b.time_delta            = 0.016;
     b.height_data           = &data[0];  //高度场数组

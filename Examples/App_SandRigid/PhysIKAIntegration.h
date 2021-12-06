@@ -6,6 +6,11 @@
 #include <random>
 #include <iostream>
 
+// Init PhysIKA render modules in viwo results in crash.
+// Set PHYSIKA_INTEGRATION_INIT_RENDER to 0 disables render initialization
+// Set PHYSIKA_INTEGRATION_INIT_RENDER to 1 to enable render initialization
+#define PHYSIKA_INTEGRATION_INIT_RENDER 1
+
 namespace PhysIKA {
 class Node;
 }
@@ -47,7 +52,7 @@ struct PhysIKACarCreateInfo
     PhysIKACarComponent chassis;
     //Vec3 chassis_box_min{};
     //Vec3 chassis_box_max{};
-    // Wheel translation and rotation is relative to chassis, scale and rotation is absolute.
+    // Wheel translation and rotation is relative to chassis, scale absolute.
     PhysIKACarComponent wheels[4]{};
     float               wheel_cylinder_radius = 1;
     //float wheel_cylinder_height{};
@@ -100,12 +105,12 @@ public:
 
 struct SandSimulationRegionCreateInfo
 {
-    double total_width_in_meter;
-    double total_height_in_meter;
+    double physical_size_x;
+    double physical_size_y;
     float  sand_layer_thickness;
     float  time_delta;
     // ground height
-    double*                                height_data;
+    const double*                          height_data;
     int                                    height_resolution_x;
     int                                    height_resolution_y;
     std::vector<VPE::PhysIKACarCreateInfo> cars{};
