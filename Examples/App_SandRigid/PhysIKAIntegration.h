@@ -31,11 +31,11 @@ enum class PhysIKACarType
 };
 
 struct PhysIKACarComponent
-{                               //
-    Vec3        translation{};  //
+{
+    Vec3        translation{};
     Vec3        scale{ 1.0f, 1.0f, 1.0f };
     Quat        RelRotation{ 0.0f, 0.0f, 0.0f, 1.0f };
-    std::string model_path{};  //
+    std::string model_path{};
     std::string sdf_path{};
 };
 
@@ -54,8 +54,8 @@ struct PhysIKACarCreateInfo
 
     float    car_mass                = 1000.0;
     float    max_speed               = 20.0;
-    float    forward_force           = 2000.0;  //
-    float    steering_speed          = 1.0;     //
+    float    forward_force           = 2000.0;
+    float    steering_speed          = 1.0;
     float    steering_lower          = -0.5;
     float    steering_upper          = 0.5;
     float    wheel_mass              = 50.0;
@@ -80,32 +80,26 @@ enum class PhysIKACarDirection
 };
 
 class PhysIKACar
-{  //All function need writing.
+{
 public:
     PhysIKACar();
     ~PhysIKACar();
-    //
-    //wheel_index&const//
     void GetChassisPositionRotation(Vec3& pos, Quat& rot);
     void GetWheelPositionRotation(uint32_t wheel_index, Vec3& pos, Quat& rot);
 
-    void SetChassisPositionRotation(const Vec3& pos, const Quat& rot);  //setset carPosition
+    void SetChassisPositionRotation(const Vec3& pos, const Quat& rot);
     void SetWheelPositionRotation(uint32_t wheel_index, const Vec3& pos, const Quat& rot);
-
-    // The center of Sand simulation region should also be updated by this method.
-    // The solution and physical size of the simulation region is defined upfront.
 
     // Car controls
     void Go(PhysIKACarDirection dir);
 
-    //private://wkm copy
     struct Impl2;
 
     std::unique_ptr<Impl2> _impl2{};
 };
 
 struct SandSimulationRegionCreateInfo
-{  //create
+{
     double total_width_in_meter;
     double total_height_in_meter;
     float  sand_layer_thickness;
@@ -115,28 +109,20 @@ struct SandSimulationRegionCreateInfo
     int                                    height_resolution_x;
     int                                    height_resolution_y;
     std::vector<VPE::PhysIKACarCreateInfo> cars{};
-    //int newcarnumber;
 };
 
 class SandSimulationRegion
 {
 public:
     SandSimulationRegion();
-    std::shared_ptr<PhysIKA::Node> GetRoot();
-    //rootshearedptr
-    //void SetHeight(double *data, int resolution_x, int resolution_y);
-    //input height_data
-    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle);  //car_handle
-    //ptr
-    std::vector<VPE::Vec3> GetSandParticles();  //
-                                                //particle_num
+    std::shared_ptr<PhysIKA::Node>   GetRoot();
+    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle);
+    std::vector<VPE::Vec3>           GetSandParticles();
     ~SandSimulationRegion();
-    //uint64_t AddCar(const VPE::PhysIKACarCreateInfo& carinfo);
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
+
     struct Impl;
     std::unique_ptr<Impl> _impl;
-
-    // std::shared_ptr<SandSimulationRegion>region;
 };
 
 }  // namespace VPE
