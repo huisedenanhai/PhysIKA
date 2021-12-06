@@ -122,12 +122,10 @@ public:
     std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle)  //car_handle
     {
         if (car_handle < newcarnumber)
-        {  //
-            //car_handle = Builder->m_car.size();//+->
-            return m_PhysIKACar[car_handle];  //buildvector.h
-        }                                     //m_carPhysIKACar
-        else
-            return nullptr;
+        {
+            return m_PhysIKACar[car_handle];
+        }
+        return nullptr;
     }
 
     std::vector<VPE::Vec3> GetSandParticles()  ////VPE::Vec3*
@@ -183,7 +181,6 @@ SandSimulationRegion::SandSimulationRegion()
     _impl = std::make_unique<Impl>();
 }
 
-//
 struct VPE::PhysIKACar::Impl2
 {
 public:
@@ -361,12 +358,8 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
     sandinfo.sandRho          = 1000.0;                                                ////
     double sandParticleHeight = 0.05;                                                  //0.05
 
-    //1data
-
-    landHeight.resize(sandinfo.nx, sandinfo.ny);            //
-    landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);  //
-    printf("%d\n%d\n", sandinfo.nx, sandinfo.ny);           //256256
-    printf("%d\n%d\n", landHeight.Nx(), landHeight.Ny());   //256256
+    landHeight.resize(sandinfo.nx, sandinfo.ny);
+    landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);
 
     //data
     for (int i = 0; i < sandinfo.nx; ++i)
@@ -375,7 +368,6 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
         {
             double aa        = info.height_data[i * sandinfo.nx + j];
             landHeight(i, j) = aa;
-            //(info.height_data)++;//
         }
     }
 
@@ -510,74 +502,64 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
 
     //--------------------------------------------------------------------
     // Car.14
-    double            scale1d = 1.;
-    PhysIKA::Vector3d scale3d(scale1d, scale1d, scale1d);  //
-    PhysIKA::Vector3f scale3f(scale1d, scale1d, scale1d);  //(1,1,1)//
-
-    PhysIKA::Vector3f chassisCenter;  //000
-    PhysIKA::Vector3f wheelCenter[4];
-    PhysIKA::Vector3f chassisSize;
-    PhysIKA::Vector3f wheelSize[4];
-
-    std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> chassisTri;  //
-    std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> wheelTri[4];
-
-    PhysIKA::DistanceField3D<PhysIKA::DataType3f> chassisSDF;
-    PhysIKA::DistanceField3D<PhysIKA::DataType3f> wheelSDF[4];
 
     interactionSolver = root->getInteractionSolver();  //ParticleSandRigidInteraction
 
-    // Load car mesh.15SDF
-    {
-        // Chassis mesh.
-        PhysIKA::ObjFileLoader chassisLoader("../../Media/car2/chassis_cube.obj");  //
-
-        chassisTri = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();  //
-        chassisTri->setPoints(chassisLoader.getVertexList());
-        chassisTri->setTriangles(chassisLoader.getFaceList());
-        ComputeBoundingBox(chassisCenter, chassisSize, chassisLoader.getVertexList());  ////
-                                                                                        //std::cout<<chassisCenter[0]<<' '<<chassisCenter[1]<<' '<<chassisCenter[2]<<std::endl;//
-                                                                                        //chassisCenter *= scale3f;//
-                                                                                        //std::cout<<chassisCenter[0]<<' '<<chassisCenter[1]<<' '<<chassisCenter[2]<<std::endl;//00
-                                                                                        //chassisSize *= scale3f;
-        chassisTri->scale(scale3f);                                                     //scaletranslate
-        chassisTri->translate(-chassisCenter);                                          //
-
-        // Chassis sdf.
-        // TODO infomodel_path
-        chassisSDF.loadSDF("../../Media/car2/chassis_cube.sdf");  //SDFcarinfo.chassis.sdf_path//carinfocreate
-        chassisSDF.scale(scale1d);
-        chassisSDF.translate(-chassisCenter);
-        //interactionSolver->addSDF(sdf);
-
-        for (int i = 0; i < 4; ++i)  //
-        {
-            string objfile("../../Media/car2/wheel.obj");
-            string sdffile("../../Media/car2/wheel.sdf");
-
-            // Wheel mesh.
-            PhysIKA::ObjFileLoader wheelLoader(objfile);
-            wheelTri[i] = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
-            wheelTri[i]->setPoints(wheelLoader.getVertexList());  //
-            wheelTri[i]->setTriangles(wheelLoader.getFaceList());
-            ComputeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());  //
-            wheelTri[i]->scale(scale3f);
-            wheelTri[i]->translate(-wheelCenter[i]);
-
-            // Wheel sdf.
-            PhysIKA::DistanceField3D<PhysIKA::DataType3f>& sdf = wheelSDF[i];
-            sdf.loadSDF(sdffile);
-            sdf.scale(scale1d);
-            sdf.translate(-wheelCenter[i]);
-            //interactionSolver->addSDF(sdf);
-        }
-    }
-
     //16 m_car
     newcarnumber = car_cache.size();
-    for (int u = 0; u < newcarnumber; u++)  //this is addcar cycle.
-    {                                       //m_car[u]
-        //newcarnumber1
+    for (int u = 0; u < newcarnumber; u++)
+    {
+        double            scale1d = 1.;
+        PhysIKA::Vector3d scale3d(scale1d, scale1d, scale1d);  //
+        PhysIKA::Vector3f scale3f(scale1d, scale1d, scale1d);  //(1,1,1)//
+
+        PhysIKA::Vector3f chassisCenter;  //000
+        PhysIKA::Vector3f wheelCenter[4];
+        PhysIKA::Vector3f chassisSize;
+        PhysIKA::Vector3f wheelSize[4];
+
+        std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> chassisTri;  //
+        std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> wheelTri[4];
+
+        PhysIKA::DistanceField3D<PhysIKA::DataType3f> chassisSDF;
+        PhysIKA::DistanceField3D<PhysIKA::DataType3f> wheelSDF[4];
+        // Load car mesh.15SDF
+        {
+            // Chassis mesh.
+            PhysIKA::ObjFileLoader chassisLoader(car_cache[u].chassis.model_path);
+            chassisTri = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
+            chassisTri->setPoints(chassisLoader.getVertexList());
+            chassisTri->setTriangles(chassisLoader.getFaceList());
+            ComputeBoundingBox(chassisCenter, chassisSize, chassisLoader.getVertexList());
+
+            chassisTri->scale(scale3f);
+            chassisTri->translate(-chassisCenter);
+
+            chassisSDF.loadSDF(car_cache[u].chassis.sdf_path);
+            chassisSDF.scale(scale1d);
+            chassisSDF.translate(-chassisCenter);
+
+            for (int i = 0; i < 4; ++i)  //
+            {
+                string objfile(car_cache[u].wheels[i].model_path);
+                string sdffile(car_cache[u].wheels[i].sdf_path);
+
+                // Wheel mesh.
+                PhysIKA::ObjFileLoader wheelLoader(objfile);
+                wheelTri[i] = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
+                wheelTri[i]->setPoints(wheelLoader.getVertexList());
+                wheelTri[i]->setTriangles(wheelLoader.getFaceList());
+                ComputeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());
+                wheelTri[i]->scale(scale3f);
+                wheelTri[i]->translate(-wheelCenter[i]);
+
+                // Wheel sdf.
+                PhysIKA::DistanceField3D<PhysIKA::DataType3f>& sdf = wheelSDF[i];
+                sdf.loadSDF(sdffile);
+                sdf.scale(scale1d);
+                sdf.translate(-wheelCenter[i]);
+            }
+        }
         m_car.push_back(std::make_shared<PhysIKA::PBDCar>());
         m_PhysIKACar.push_back(std::make_shared<VPE::PhysIKACar>());
         m_PhysIKACar.back()->_impl2->m_car = m_car.back();
