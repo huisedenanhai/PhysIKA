@@ -34,7 +34,7 @@ struct PhysIKACarComponent
 {
     Vec3        translation{};
     Vec3        scale{ 1.0f, 1.0f, 1.0f };
-    Quat        RelRotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+    Quat        rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
     std::string model_path{};
     std::string sdf_path{};
 };
@@ -43,7 +43,7 @@ struct PhysIKACarCreateInfo
 {
     PhysIKACarType type;
 
-    Vec3                carPosition;
+    Vec3                car_position;
     PhysIKACarComponent chassis;
     //Vec3 chassis_box_min{};
     //Vec3 chassis_box_max{};

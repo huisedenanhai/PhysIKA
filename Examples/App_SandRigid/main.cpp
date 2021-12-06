@@ -50,9 +50,9 @@ int main()
     //可以做一个循环，赋值vector
     VPE::PhysIKACarCreateInfo carobject;
     b.cars.push_back(carobject);
-    b.cars[0].carPosition.x = 0;
-    b.cars[0].carPosition.y = 1;
-    b.cars[0].carPosition.z = 0;
+    b.cars[0].car_position.x = 0;
+    b.cars[0].car_position.y = 1;
+    b.cars[0].car_position.z = 0;
 
     b.cars[0].chassis.translation.x = 0;
     b.cars[0].chassis.translation.y = 0;

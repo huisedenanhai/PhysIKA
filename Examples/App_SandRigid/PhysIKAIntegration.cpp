@@ -569,21 +569,15 @@ inline std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Impl::Init(co
         rigidSim->addChild(m_car[u]);
         m_car[u]->m_rigidSolver = rigidSolver;
 
-        m_car[u]->carPosition = PhysIKA::Vector3f(car_cache[u].carPosition.x, car_cache[u].carPosition.y, car_cache[u].carPosition.z) + chassisCenter;  //
+        m_car[u]->carPosition = ToPhysIKA(car_cache[u].car_position) + chassisCenter;  //
+        for (int w = 0; w < 4; w++)
+        {
+            m_car[u]->wheelRelPosition[w] = ToPhysIKA(car_cache[u].wheels[w].translation) * scale1d + wheelCenter[w] - chassisCenter;
+            m_car[u]->wheelRelRotation[w] = ToPhysIKA(car_cache[u].wheels[w].rotation);
+        }
 
-        //GetWheelPositionRotation
-        //,vector carcache[newcarnumber]
-        m_car[u]->wheelRelPosition[0] = PhysIKA::Vector3f(car_cache[u].wheels[0].translation.x, car_cache[u].wheels[0].translation.y, car_cache[u].wheels[0].translation.z) * scale1d + wheelCenter[0] - chassisCenter;      //(-0.3f, -0.2, -0.4f)
-        m_car[u]->wheelRelPosition[1] = PhysIKA::Vector3f(car_cache[u].wheels[1].translation.x, car_cache[u].wheels[1].translation.y, car_cache[u].wheels[1].translation.z) * scale1d + wheelCenter[1] - chassisCenter;      //(+0.3f, -0.2, -0.4f)
-        m_car[u]->wheelRelPosition[2] = PhysIKA::Vector3f(car_cache[u].wheels[2].translation.x, car_cache[u].wheels[2].translation.y, car_cache[u].wheels[2].translation.z) * scale1d + wheelCenter[2] - chassisCenter;      //(-0.3f, -0.2,  0.4f)
-        m_car[u]->wheelRelPosition[3] = PhysIKA::Vector3f(car_cache[u].wheels[3].translation.x, car_cache[u].wheels[3].translation.y, car_cache[u].wheels[3].translation.z) * scale1d + wheelCenter[3] - chassisCenter;      //(+0.3f, -0.2,  0.4f)
-        m_car[u]->wheelRelRotation[0] = PhysIKA::Quaternion<float>(car_cache[u].wheels[0].RelRotation.x, car_cache[u].wheels[0].RelRotation.y, car_cache[u].wheels[0].RelRotation.z, car_cache[u].wheels[0].RelRotation.w);  //(0, 0, 0, 1);
-        m_car[u]->wheelRelRotation[1] = PhysIKA::Quaternion<float>(car_cache[u].wheels[1].RelRotation.x, car_cache[u].wheels[1].RelRotation.y, car_cache[u].wheels[1].RelRotation.z, car_cache[u].wheels[1].RelRotation.w);
-        m_car[u]->wheelRelRotation[2] = PhysIKA::Quaternion<float>(car_cache[u].wheels[2].RelRotation.x, car_cache[u].wheels[2].RelRotation.y, car_cache[u].wheels[2].RelRotation.z, car_cache[u].wheels[2].RelRotation.w);
-        m_car[u]->wheelRelRotation[3] = PhysIKA::Quaternion<float>(car_cache[u].wheels[3].RelRotation.x, car_cache[u].wheels[3].RelRotation.y, car_cache[u].wheels[3].RelRotation.z, car_cache[u].wheels[3].RelRotation.w);  //car_cache[newcarnumber].wheels[3].RelRotation
-                                                                                                                                                                                                                             //
-        m_car[u]->wheelupDirection    = PhysIKA::Vector3f(0, 0.25, 0 /*car_cache[u].wheels[0].translation.x, car_cache[u].wheels[0].translation.y, car_cache[u].wheels[0].translation.z*/);                                  //z(0, 1, 0)(0, 0.5, 0)//
-        m_car[u]->wheelRightDirection = PhysIKA::Vector3f(1, 0, 0);                                                                                                                                                          //
+        m_car[u]->wheelupDirection    = PhysIKA::Vector3f(0, 0.25, 0);
+        m_car[u]->wheelRightDirection = PhysIKA::Vector3f(1, 0, 0);
 
         m_car[u]->chassisMass    = car_cache[u].car_mass;                                                              //
         m_car[u]->chassisInertia = PhysIKA::RigidUtil::calculateCubeLocalInertia(m_car[u]->chassisMass, chassisSize);  //
