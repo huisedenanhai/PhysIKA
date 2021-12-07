@@ -109,14 +109,14 @@ public:
     PhysIKA::Vector3f                                         carPosition;
     PhysIKA::Quaternion<float>                                carRotation;
     std::vector<PhysIKA::RigidBody2_ptr>                      m_rigids;
+    std::shared_ptr<PhysIKA::PBDSandSolver>                   psandSolver;
 
 #if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     std::vector<std::shared_ptr<PhysIKA::RigidMeshRender>> m_rigidRenders;
 #endif
 
-    PhysIKA::SandGridInfo               sandinfo;    //
-    PhysIKA::HostHeightField1d          landHeight;  //
-    std::vector<PhysIKA::Vector3d>      particlePos;
+    PhysIKA::SandGridInfo               sandinfo;
+    PhysIKA::HostHeightField1d          landHeight;
     std::shared_ptr<PhysIKA::PBDSolver> rigidSolver;
 
     std::shared_ptr<PhysIKA::Node> GetRoot()  //rootParticleSandRigidInteraction
@@ -135,22 +135,20 @@ public:
 
     std::vector<VPE::Vec3> GetSandParticles()  ////VPE::Vec3*
     {
-        int               particle_num = particlePos.size();  //build
-        vector<VPE::Vec3> a;
-        VPE::Vec3         a_cache;
-        a_cache.x = 0;
-        a_cache.y = 0;
-        a_cache.z = 0;
-        // TODO over
-        for (int i = 0; i < particle_num; i++)
+        auto&                          pos_d        = psandSolver->getParticlePosition3D();
+        auto                           particle_num = pos_d.size();
+        std::vector<PhysIKA::Vector3d> positions{};
+        positions.resize(particle_num);
+        cudaMemcpy(positions.data(), &pos_d[0], sizeof(PhysIKA::Vector3d) * particle_num, cudaMemcpyDeviceToHost);
+        std::vector<VPE::Vec3> result{};
+        result.reserve(particle_num);
+        for (const auto& p : positions)
         {
-            a.push_back(a_cache);
-            a[i].x = particlePos[i][0];  //buildbuild
-            a[i].y = particlePos[i][1];  //also put in impl-chengyuanbianliang,,
-            a[i].z = particlePos[i][2];
+            result.push_back(
+                VPE::Vec3{ static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2]) });
         }
 
-        return a;
+        return result;
     }
 
     void Init(const SandSimulationRegionCreateInfo& info);
@@ -356,12 +354,12 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     //build
     sandinfo.nx               = info.height_resolution_x;
     sandinfo.ny               = info.height_resolution_y;
-    sandinfo.griddl           = info.physical_size_x / info.height_resolution_x;  //
-    sandinfo.mu               = 0.7;                                              //,//
-    sandinfo.drag             = 0.95;                                             //
-    sandinfo.slide            = 10 * sandinfo.griddl;                             //10100
-    sandinfo.sandRho          = 1000.0;                                           ////
-    double sandParticleHeight = 0.05;                                             //0.05
+    sandinfo.griddl           = info.grid_size;
+    sandinfo.mu               = 0.7;
+    sandinfo.drag             = 0.95;
+    sandinfo.slide            = 10 * sandinfo.griddl;
+    sandinfo.sandRho          = 1000.0;
+    double sandParticleHeight = 0.05;
 
     landHeight.resize(sandinfo.nx, sandinfo.ny);
     landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);
@@ -398,8 +396,9 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     root->varCprobability()->setValue(100);
 
     // 2 Sand simulator.
-    std::shared_ptr<PhysIKA::SandSimulator> sandSim     = std::make_shared<PhysIKA::SandSimulator>();
-    std::shared_ptr<PhysIKA::PBDSandSolver> psandSolver = std::make_shared<PhysIKA::PBDSandSolver>();
+    std::shared_ptr<PhysIKA::SandSimulator> sandSim = std::make_shared<PhysIKA::SandSimulator>();
+
+    psandSolver = std::make_shared<PhysIKA::PBDSandSolver>();
     psandSolver->setSandGridInfo(sandinfo);
     sandSim->needForward(false);
     sandSim->setSandSolver(psandSolver);
@@ -453,6 +452,7 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     double mb       = m0 * 5;
     double spacing2 = spacing;
 
+    std::vector<PhysIKA::Vector3d> particlePos;
     //8
     for (int i = 0; i < sandinfo.nx; ++i)
     {

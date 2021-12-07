@@ -105,12 +105,11 @@ public:
 
 struct SandSimulationRegionCreateInfo
 {
-    double physical_size_x;
-    double physical_size_y;
-    float  sand_layer_thickness;
-    float  time_delta;
+    float sand_layer_thickness;
+    float time_delta;
     // ground height
     const double*                          height_data;
+    double                                 grid_size;
     int                                    height_resolution_x;
     int                                    height_resolution_y;
     std::vector<VPE::PhysIKACarCreateInfo> cars{};

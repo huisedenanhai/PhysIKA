@@ -38,13 +38,12 @@ int main()
     }
 
     VPE::SandSimulationRegionCreateInfo b;
-    b.physical_size_x  = 10;
-    b.physical_size_y = 10;
-    b.sand_layer_thickness  = 0.02;
-    b.time_delta            = 0.016;
-    b.height_data           = &data[0];  //高度场数组
-    b.height_resolution_x   = 256;
-    b.height_resolution_y   = 256;
+    b.grid_size            = 10.0 / 256;
+    b.sand_layer_thickness = 0.02;
+    b.time_delta           = 0.016;
+    b.height_data          = &data[0];  //高度场数组
+    b.height_resolution_x  = 256;
+    b.height_resolution_y  = 256;
     //把这个b.cars参数传进去
     //b.cars[0].type = FourWheel;
     //可以做一个循环，赋值vector
