@@ -373,18 +373,10 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
         }
     }
 
-    //--------------------------------------------------------------------------------------------
-
     car_cache = info.cars;
 
-    //--------------------------------------------------------------------------------------------
-    //double sandParticleHeight = 0.05;
-
-    SceneGraph& scene = SceneGraph::getInstance();
-    scene.setUpperBound(Vector3f(10, 10, 10));
-    scene.setLowerBound(Vector3f(-10, -5, -10));
     // 1 Root node. Also the simulator.
-    root = scene.createNewScene<ParticleSandRigidInteraction>();  //
+    root = std::make_shared<ParticleSandRigidInteraction>();
     root->setActive(true);
     root->setDt(info.time_delta);
 
