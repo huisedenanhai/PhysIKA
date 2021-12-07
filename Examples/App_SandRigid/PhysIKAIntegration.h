@@ -107,6 +107,8 @@ struct SandSimulationRegionCreateInfo
 {
     float sand_layer_thickness;
     float time_delta;
+
+    Vec3 center{};
     // ground height, index of data at (x, y) = height_data[y * resolution_x + x]
     const double*                          height_data;
     double                                 grid_physical_size;
@@ -119,10 +121,16 @@ class SandSimulationRegion
 {
 public:
     SandSimulationRegion();
+    ~SandSimulationRegion();
+
     std::shared_ptr<PhysIKA::Node>   GetRoot();
     std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle);
     std::vector<VPE::Vec3>           GetSandParticles();
-    ~SandSimulationRegion();
+
+    // SDF interacts with sand
+    // rigid_id is get by calling RigidBody::getId
+    void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id);
+
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
 
     struct Impl;

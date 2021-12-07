@@ -152,6 +152,15 @@ public:
     }
 
     void Init(const SandSimulationRegionCreateInfo& info);
+
+    void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
+    {
+        PhysIKA::DistanceField3D<PhysIKA::DataType3f> sdf;
+        sdf.loadSDF(sdf_file);
+        sdf.scale(1.0f);
+        sdf.translate(ToPhysIKA(translate));
+        interactionSolver->addSDF(sdf, rigid_id);
+    }
 };
 
 std::shared_ptr<PhysIKA::Node> SandSimulationRegion::GetRoot()
@@ -363,6 +372,7 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
 
     landHeight.resize(sandinfo.nx, sandinfo.ny);
     landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);
+    landHeight.setOrigin(info.center.x, info.center.y, info.center.z);
 
     for (int j = 0; j < sandinfo.ny; ++j)
     {
@@ -523,8 +533,6 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
         std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> chassisTri;  //
         std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> wheelTri[4];
 
-        PhysIKA::DistanceField3D<PhysIKA::DataType3f> chassisSDF;
-        PhysIKA::DistanceField3D<PhysIKA::DataType3f> wheelSDF[4];
         // Load car mesh.15SDF
         {
             // Chassis mesh.
@@ -536,10 +544,6 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
 
             chassisTri->scale(scale3f);
             chassisTri->translate(-chassisCenter);
-
-            chassisSDF.loadSDF(car_cache[u].chassis.sdf_path);
-            chassisSDF.scale(scale1d);
-            chassisSDF.translate(-chassisCenter);
 
             for (int i = 0; i < 4; ++i)  //
             {
@@ -554,12 +558,6 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
                 ComputeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());
                 wheelTri[i]->scale(scale3f);
                 wheelTri[i]->translate(-wheelCenter[i]);
-
-                // Wheel sdf.
-                PhysIKA::DistanceField3D<PhysIKA::DataType3f>& sdf = wheelSDF[i];
-                sdf.loadSDF(sdffile);
-                sdf.scale(scale1d);
-                sdf.translate(-wheelCenter[i]);
             }
         }
         m_car.push_back(std::make_shared<PhysIKA::PBDCar>());
@@ -616,7 +614,7 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
         m_rigidRenders.push_back(chassisRender);
         m_car[u]->m_chassis->addVisualModule(chassisRender);
 #endif
-        interactionSolver->addSDF(chassisSDF, m_car[0]->m_chassis->getId());
+        AddSDF(car_cache[u].chassis.sdf_path, {}, m_car[u]->m_chassis->getId());
 
         // Bounding radius of chassis.
         float chassisRadius = chassisTri->computeBoundingRadius();
@@ -633,7 +631,7 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
             m_car[u]->m_wheels[i]->addVisualModule(renderModule);
             m_rigidRenders.push_back(renderModule);
 #endif
-            interactionSolver->addSDF(wheelSDF[i], m_car[u]->m_wheels[i]->getId());
+            AddSDF(car_cache[u].wheels[i].sdf_path, {}, m_car[u]->m_wheels[i]->getId());
 
             // Bounding radius of chassis.
             float wheelRadius = wheelTri[i]->computeBoundingRadius();
@@ -645,4 +643,8 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
 }
 
+void SandSimulationRegion::AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
+{
+    _impl->AddSDF(sdf_file, translate, rigid_id);
+}
 }  // namespace VPE
