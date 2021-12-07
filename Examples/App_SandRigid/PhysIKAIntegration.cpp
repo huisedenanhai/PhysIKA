@@ -354,7 +354,7 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     //build
     sandinfo.nx               = info.height_resolution_x;
     sandinfo.ny               = info.height_resolution_y;
-    sandinfo.griddl           = info.grid_size;
+    sandinfo.griddl           = info.grid_physical_size;
     sandinfo.mu               = 0.7;
     sandinfo.drag             = 0.95;
     sandinfo.slide            = 10 * sandinfo.griddl;
@@ -364,12 +364,11 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     landHeight.resize(sandinfo.nx, sandinfo.ny);
     landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);
 
-    //data
-    for (int i = 0; i < sandinfo.nx; ++i)
-    {  //
-        for (int j = 0; j < sandinfo.ny; ++j)
+    for (int j = 0; j < sandinfo.ny; ++j)
+    {
+        for (int i = 0; i < sandinfo.nx; ++i)
         {
-            double aa        = info.height_data[i * sandinfo.nx + j];
+            double aa        = info.height_data[j * sandinfo.nx + i];
             landHeight(i, j) = aa;
         }
     }
