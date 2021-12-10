@@ -41,7 +41,7 @@ connector_use_demo* connector_use_demo::m_instance = 0;
 void                connector_use_demo::createScene(const VPE::SandSimulationRegionCreateInfo& info)  //可能是这个问题：set和add把参数导进去了，但是create没有用之前的region对象。
 {
     SceneGraph& scene = SceneGraph::getInstance();
-    scene.setUpperBound(Vector3f(10, 10, 10));
+    scene.setUpperBound(Vector3f(2, 10, 2));
     scene.setLowerBound(Vector3f(-10, -5, -10));
     m_region = VPE::SandSimulationRegion::Create(info);
     if (info.cars.size() > 0)

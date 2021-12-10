@@ -401,6 +401,8 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
 
     psandSolver = std::make_shared<PhysIKA::PBDSandSolver>();
     psandSolver->setSandGridInfo(sandinfo);
+    // Always update position 3d, required by GetSandParticles()
+    psandSolver->needPosition3D(true);
     sandSim->needForward(false);
     sandSim->setSandSolver(psandSolver);
     root->setSandSolver(psandSolver);
