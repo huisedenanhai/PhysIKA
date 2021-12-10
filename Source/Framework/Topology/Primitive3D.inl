@@ -3420,7 +3420,7 @@ COMM_FUNC bool TTet3D<Real>::isValid()
 }
 
 template <typename Real>
-COMM_FUNC bool TTet3D<Real>::intersect(const TTet3D<Real>& tet2, Coord3D& interNorm, Real& interDist, Coord3D& p1, Coord3D& p2, int need_distance = 1) const
+COMM_FUNC bool TTet3D<Real>::intersect(const TTet3D<Real>& tet2, Coord3D& interNorm, Real& interDist, Coord3D& p1, Coord3D& p2, int need_distance) const
 {
 
     //	printf("VVVVVVVVVVVVVVVVVVVVVVv\n");
