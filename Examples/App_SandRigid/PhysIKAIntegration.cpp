@@ -596,8 +596,12 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
         auto prigid = std::make_shared<RigidBody2<DataType3f>>();
         int  id     = rigidSim->addRigid(prigid);
         prigid->loadShape(rb_info.shape_path);
+
         auto triset = TypeInfo::cast<TriangleSet<DataType3f>>(prigid->getTopologyModule());
         triset->scale(scale);
+        // TODO local inertia of triangle mesh
+        Vector3f rigidI = RigidUtil::calculateSphereLocalInertia(rigid_mass, 1.0f);
+        prigid->setI(Inertia<float>(rigid_mass, rigidI));
 
         DistanceField3D<DataType3f> sdf;
         sdf.loadSDF(rb_info.sdf_path);

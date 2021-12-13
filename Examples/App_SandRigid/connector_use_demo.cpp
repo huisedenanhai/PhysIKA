@@ -121,15 +121,24 @@ void                connector_use_demo::createScene()
             VPE::Quat last_quat{};
             auto      chassis = car->GetChassisRigidBody();
             chassis->GetGlobalPositionRotation(last_pos, last_quat);
+            auto print_rb_xform = [](const char* name, auto rb) {
+                VPE::Vec3 pos{};
+                VPE::Quat quat{};
+                rb->GetGlobalPositionRotation(pos, quat);
+                printf("%s Pos { %f, %f, %f }, %s Quat { %f, %f, %f, %f }",
+                       name,
+                       pos.x,
+                       pos.y,
+                       pos.z,
+                       name,
+                       quat.x,
+                       quat.y,
+                       quat.z,
+                       quat.w);
+            };
 
-            printf("Last Pos { %f, %f, %f }, Last Quat { %f, %f, %f, %f }",
-                   last_pos.x,
-                   last_pos.y,
-                   last_pos.z,
-                   last_quat.x,
-                   last_quat.y,
-                   last_quat.z,
-                   last_quat.w);
+            print_rb_xform("Chassis", chassis);
+            print_rb_xform("Cube", rigidbody);
 
             total_time += dt;
             last_pos.y = 1.0 + std::sin(total_time);
