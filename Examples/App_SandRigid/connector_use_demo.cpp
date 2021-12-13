@@ -48,5 +48,41 @@ void                connector_use_demo::createScene(const VPE::SandSimulationReg
     {
         m_car = m_region->GetCar(0);  //这里获取到车的智能指针
     }
-    scene.setRootNode(m_region->GetRoot());
+
+    class UpdateNode : public Node
+    {
+    public:
+        std::shared_ptr<VPE::PhysIKACar> car;
+        VPE::Vec3                        position{ 0, 0, 0 };
+        VPE::Quat                        rotation{ 0, 0, 0, 1 };
+        float                            total_time{};
+
+        void advance(float dt) override
+        {
+            VPE::Vec3 last_pos{};
+            VPE::Quat last_quat{};
+            car->GetChassisPositionRotation(last_pos, last_quat);
+
+            printf("Last Pos { %f, %f, %f }, Last Quat { %f, %f, %f, %f }",
+                   last_pos.x,
+                   last_pos.y,
+                   last_pos.z,
+                   last_quat.x,
+                   last_quat.y,
+                   last_quat.z,
+                   last_quat.w);
+
+            total_time += dt;
+            position.y = 1.0 + std::sin(total_time);
+            car->SetChassisPositionRotation(position, last_quat);
+        }
+    };
+
+    auto root    = m_region->GetRoot();
+    auto updater = std::make_shared<UpdateNode>();
+    updater->car = m_car;
+
+    root->addChild(updater);
+
+    scene.setRootNode(root);
 }

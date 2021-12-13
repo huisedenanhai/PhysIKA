@@ -59,6 +59,15 @@ void GetRigidBodyGlobalPositionRotation(const T& rb, Vec3& pos, Quat& rot)
     rot           = FromPhysIKA(rotation);
 }
 
+template <typename T>
+void SetRigidBodyGlobalPositionRotation(const T& rb, const Vec3& pos, const Quat& rot)
+{
+    auto position = ToPhysIKA(pos);
+    auto rotation = ToPhysIKA(rot);
+    rb->setGlobalR(position);
+    rb->setGlobalQ(rotation);
+}
+
 bool ComputeBoundingBox(PhysIKA::Vector3f& center, PhysIKA::Vector3f& boxsize, const std::vector<PhysIKA::Vector3f>& vertices)
 {
     if (vertices.size() <= 0)
@@ -215,94 +224,14 @@ public:
 
     void SetChassisPositionRotation(const Vec3& pos, const Quat& rot)
     {
-        m_car->carPosition[0] = pos.x;  //
-        m_car->carPosition[1] = pos.y;
-        m_car->carPosition[2] = pos.z;
-
-        //
-        ////carPosition
-
-        double cos0_5 = rot.x;
-        double sin0_5 = 1 - pow(cos0_5, 2);
-        //
-        double sin = 2 * cos0_5 * sin0_5;
-        double cos = pow(cos0_5, 2) - pow(sin0_5, 2);
-        //0
-        Vec3 a;
-        a.x = m_car->wheelRelPosition[0][0] - m_car->carPosition[0];
-        a.y = 0;
-        a.z = m_car->wheelRelPosition[0][2] - m_car->carPosition[2];
-        //0
-        double length = pow(pow(a.x, 2) + pow(a.z, 2), 0.5);
-        double cos_   = a.x / length;
-        double sin_   = pow(1 - pow(cos_, 2), 0.5);
-        //
-        double final_cos = cos_ * cos - sin_ * sin;
-        double final_sin = cos_ * sin + sin_ * cos;
-
-        m_car->wheelRelPosition[0][0] = length * final_cos;
-        m_car->wheelRelPosition[0][2] = length * final_sin;
-
-        //1
-        //Vec3 a;
-        a.x = m_car->wheelRelPosition[1][0] - m_car->carPosition[0];
-        a.y = 0;
-        a.z = m_car->wheelRelPosition[1][2] - m_car->carPosition[2];
-        //0
-        double length1 = pow(pow(a.x, 2) + pow(a.z, 2), 0.5);
-        double cos_1   = a.x / length1;
-        double sin_1   = pow(1 - pow(cos_, 2), 0.5);
-        //
-        double final_cos1 = cos_1 * cos - sin_1 * sin;
-        double final_sin1 = cos_1 * sin + sin_1 * cos;
-
-        m_car->wheelRelPosition[1][0] = length1 * final_cos1;
-        m_car->wheelRelPosition[1][2] = length1 * final_sin1;
-
-        //2
-        //Vec3 a;
-        a.x = m_car->wheelRelPosition[2][0] - m_car->carPosition[0];
-        a.y = 0;
-        a.z = m_car->wheelRelPosition[2][2] - m_car->carPosition[2];
-        //0
-        double length2 = pow(pow(a.x, 2) + pow(a.z, 2), 0.5);
-        double cos_2   = a.x / length2;
-        double sin_2   = pow(1 - pow(cos_2, 2), 0.5);
-        //
-        double final_cos2 = cos_2 * cos - sin_2 * sin;
-        double final_sin2 = cos_2 * sin + sin_2 * cos;
-
-        m_car->wheelRelPosition[2][0] = length2 * final_cos;
-        m_car->wheelRelPosition[2][2] = length2 * final_sin;
-
-        //3
-        //Vec3 a;
-        a.x = m_car->wheelRelPosition[3][0] - m_car->carPosition[0];
-        a.y = 0;
-        a.z = m_car->wheelRelPosition[3][2] - m_car->carPosition[2];
-        //0
-        double length3 = pow(pow(a.x, 2) + pow(a.z, 2), 0.5);
-        double cos_3   = a.x / length3;
-        double sin_3   = pow(1 - pow(cos_3, 2), 0.5);
-        //
-        double final_cos3 = cos_3 * cos - sin_3 * sin;
-        double final_sin3 = cos_3 * sin + sin_3 * cos;
-
-        m_car->wheelRelPosition[3][0] = length3 * final_cos3;
-        m_car->wheelRelPosition[3][2] = length3 * final_sin3;
+        auto chassis = m_car->getChassis();
+        SetRigidBodyGlobalPositionRotation(chassis, pos, rot);
     }
 
     void SetWheelPositionRotation(uint32_t wheel_index, const Vec3& pos, const Quat& rot)
-    {  //
-        //set chassis height
-        //TODO
-
-        //
-        m_car->wheelRelPosition[wheel_index][0] = pos.x - m_car->carPosition[0];
-        m_car->wheelRelPosition[wheel_index][1] = pos.y - m_car->carPosition[1];
-        m_car->wheelRelPosition[wheel_index][2] = pos.z - m_car->carPosition[2];
-
-        //
+    {
+        auto wheel = m_car->getWheels(wheel_index);
+        SetRigidBodyGlobalPositionRotation(wheel, pos, rot);
     }
 
     void Go(PhysIKACarDirection dir)
