@@ -116,8 +116,8 @@ public:
 struct PhysIKARigidBodyCreateInfo
 {
     float       mass  = 0;
-    Vec3        scale = { 1.0f, 1.0f, 1.0f };
-    std::string triangle_path{};  // .obj
+    float       scale = 1.0f;
+    std::string shape_path{};  // .obj
     std::string sdf_path{};
 };
 
@@ -133,7 +133,7 @@ struct SandSimulationRegionCreateInfo
     int                                     height_resolution_x;
     int                                     height_resolution_y;
     std::vector<VPE::PhysIKACarCreateInfo>  cars{};
-    std::vector<PhysIKARigidBodyCreateInfo> rigid_bodies{};
+    std::vector<PhysIKARigidBodyCreateInfo> rigidbodies{};
 };
 
 class SandSimulationRegion
@@ -142,9 +142,10 @@ public:
     SandSimulationRegion();
     ~SandSimulationRegion();
 
-    std::shared_ptr<PhysIKA::Node>   GetRoot();
-    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle);
-    std::vector<VPE::Vec3>           GetSandParticles();
+    std::shared_ptr<PhysIKA::Node>         GetRoot();
+    std::shared_ptr<VPE::PhysIKACar>       GetCar(uint64_t car_index);
+    std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index);
+    std::vector<VPE::Vec3>                 GetSandParticles();
 
     // SDF interacts with sand
     // rigid_id is get by calling RigidBody::getId

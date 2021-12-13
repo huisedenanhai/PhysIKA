@@ -38,24 +38,82 @@
 using namespace std;
 
 connector_use_demo* connector_use_demo::m_instance = 0;
-void                connector_use_demo::createScene(const VPE::SandSimulationRegionCreateInfo& info)  //可能是这个问题：set和add把参数导进去了，但是create没有用之前的region对象。
+void                connector_use_demo::createScene()
 {
+    double data[256 * 256] = {};
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 256; j++)
+        {
+            data[i * 256 + j] = abs(i - 128) * 0.01f;
+        }
+    }
+
+    VPE::SandSimulationRegionCreateInfo info;
+    info.center.y             = 100;
+    info.center.x             = 2;
+    info.center.z             = 2;
+    info.grid_physical_size   = 10.0 / 256;
+    info.sand_layer_thickness = 0.02;
+    info.time_delta           = 0.016;
+    info.height_data          = &data[0];
+    info.height_resolution_x  = 256;
+    info.height_resolution_y  = 256;
+
+    VPE::PhysIKACarCreateInfo carobject;
+    info.cars.push_back(carobject);
+    info.cars[0].car_position.x = 0;
+    info.cars[0].car_position.y = 1;
+    info.cars[0].car_position.z = 0;
+
+    info.cars[0].chassis.translation.x = 0;
+    info.cars[0].chassis.translation.y = 0;
+    info.cars[0].chassis.translation.z = 0;
+    info.cars[0].chassis.model_path    = "../../Media/car2/chassis_cube.obj";
+    info.cars[0].chassis.sdf_path      = "../../Media/car2/chassis_cube.sdf";
+    for (int i = 0; i < 4; i++)
+    {
+        info.cars[0].wheels[i].model_path = "../../Media/car2/wheel.obj";
+        info.cars[0].wheels[i].sdf_path   = "../../Media/car2/wheel.sdf";
+    }
+
+    info.cars[0].wheels[0].translation.x = -0.3f;
+    info.cars[0].wheels[0].translation.y = -0.2;
+    info.cars[0].wheels[0].translation.z = -0.4f;
+
+    info.cars[0].wheels[1].translation.x = +0.3f;
+    info.cars[0].wheels[1].translation.y = -0.2;
+    info.cars[0].wheels[1].translation.z = -0.4f;
+
+    info.cars[0].wheels[2].translation.x = -0.3f;
+    info.cars[0].wheels[2].translation.y = -0.2;
+    info.cars[0].wheels[2].translation.z = 0.4f;
+
+    info.cars[0].wheels[3].translation.x = +0.3f;
+    info.cars[0].wheels[3].translation.y = -0.2;
+    info.cars[0].wheels[3].translation.z = 0.4f;
+
+    VPE::PhysIKARigidBodyCreateInfo rb_info{};
+    rb_info.mass       = 1.0f;
+    rb_info.scale      = 0.15f;
+    rb_info.shape_path = "../../Media/standard/standard_cube.obj";
+    rb_info.sdf_path   = "../../Media/standard/standard_cube.sdf";
+    info.rigidbodies.push_back(rb_info);
+
     SceneGraph& scene = SceneGraph::getInstance();
     scene.setUpperBound(Vector3f(2, 10, 2));
     scene.setLowerBound(Vector3f(-10, -5, -10));
     m_region = VPE::SandSimulationRegion::Create(info);
-    if (info.cars.size() > 0)
-    {
-        m_car = m_region->GetCar(0);  //这里获取到车的智能指针
-    }
+    m_car    = m_region->GetCar(0);
+    auto rb  = m_region->GetRigidBody(0);
+    rb->SetGlobalPositionRotation({ 1, 1, 2 }, { 0, 0, 0, 1 });
 
     class UpdateNode : public Node
     {
     public:
-        std::shared_ptr<VPE::PhysIKACar> car;
-        VPE::Vec3                        position{ 0, 0, 0 };
-        VPE::Quat                        rotation{ 0, 0, 0, 1 };
-        float                            total_time{};
+        std::shared_ptr<VPE::PhysIKACar>       car;
+        std::shared_ptr<VPE::PhysIKARigidBody> rigidbody;
+        float                                  total_time{};
 
         void advance(float dt) override
         {
@@ -74,14 +132,19 @@ void                connector_use_demo::createScene(const VPE::SandSimulationReg
                    last_quat.w);
 
             total_time += dt;
-            position.y = 1.0 + std::sin(total_time);
-            chassis->SetGlobalPositionRotation(position, last_quat);
+            last_pos.y = 1.0 + std::sin(total_time);
+            chassis->SetGlobalPositionRotation(last_pos, last_quat);
+
+            rigidbody->SetGlobalPositionRotation(
+                { 1, std::sin(total_time * 10.0f) + 1.0f, 2.0f },
+                { 0, 0, 0, 1 });
         }
     };
 
-    auto root    = m_region->GetRoot();
-    auto updater = std::make_shared<UpdateNode>();
-    updater->car = m_car;
+    auto root          = m_region->GetRoot();
+    auto updater       = std::make_shared<UpdateNode>();
+    updater->car       = m_car;
+    updater->rigidbody = rb;
 
     root->addChild(updater);
 

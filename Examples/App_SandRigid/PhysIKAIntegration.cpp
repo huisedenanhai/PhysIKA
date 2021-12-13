@@ -142,6 +142,7 @@ public:
     PhysIKA::Vector3f                                         carPosition;
     PhysIKA::Quaternion<float>                                carRotation;
     std::vector<PhysIKA::RigidBody2_ptr>                      m_rigids;
+    std::vector<std::shared_ptr<PhysIKARigidBody>>            m_rigidbody_wrappers{};
     std::shared_ptr<PhysIKA::PBDSandSolver>                   psandSolver;
 
 #if PHYSIKA_INTEGRATION_INIT_RENDER > 0
@@ -204,6 +205,11 @@ std::shared_ptr<PhysIKA::Node> SandSimulationRegion::GetRoot()
 std::shared_ptr<VPE::PhysIKACar> SandSimulationRegion::GetCar(uint64_t car_handle)
 {
     return _impl->GetCar(car_handle);
+}
+
+std::shared_ptr<VPE::PhysIKARigidBody> SandSimulationRegion::GetRigidBody(uint64_t rb_index)
+{
+    return _impl->m_rigidbody_wrappers[rb_index];
 }
 
 std::vector<VPE::Vec3> SandSimulationRegion::GetSandParticles()
@@ -488,7 +494,6 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
             for (int i = 0; i < 4; ++i)  //
             {
                 string objfile(car_cache[u].wheels[i].model_path);
-                string sdffile(car_cache[u].wheels[i].sdf_path);
 
                 // Wheel mesh.
                 PhysIKA::ObjFileLoader wheelLoader(objfile);
@@ -580,6 +585,35 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     }
     // Wrapper accesses car->m_chassis, which is only valid after call to car->build()
     m_PhysIKACar.push_back(CreatePhysIKACar(m_car.back()));
+
+    for (auto& rb_info : info.rigidbodies)
+    {
+        double   scale1d = rb_info.scale;
+        Vector3f scale(scale1d, scale1d, scale1d);
+        float    rigid_mass = rb_info.mass;
+
+        /// rigids body
+        auto prigid = std::make_shared<RigidBody2<DataType3f>>();
+        int  id     = rigidSim->addRigid(prigid);
+        prigid->loadShape(rb_info.shape_path);
+        auto triset = TypeInfo::cast<TriangleSet<DataType3f>>(prigid->getTopologyModule());
+        triset->scale(scale);
+
+        DistanceField3D<DataType3f> sdf;
+        sdf.loadSDF(rb_info.sdf_path);
+        sdf.scale(scale1d);
+        interactionSolver->addSDF(sdf, id);
+
+        m_rigids.push_back(prigid);
+        m_rigidbody_wrappers.push_back(CreatePhysIKARigidBody(prigid));
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+        auto renderModule = std::make_shared<RigidMeshRender>(prigid->getTransformationFrame());
+        renderModule->setColor(Vector3f(0.8, std::rand() % 1000 / ( double )1000, 0.8));
+        prigid->addVisualModule(renderModule);
+        m_rigidRenders.push_back(renderModule);
+#endif
+    }
 
     interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
 }

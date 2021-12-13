@@ -31,7 +31,7 @@ public:
         return m_instance;
     }
 
-    void createScene(const VPE::SandSimulationRegionCreateInfo& info);  //把create放进这个函数里！
+    void createScene();
 
     void run()
     {
