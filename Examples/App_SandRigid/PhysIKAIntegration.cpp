@@ -582,9 +582,10 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
 
             m_rigids.push_back(m_car[u]->m_wheels[i]);
         }
+
+        // Wrapper accesses car->m_chassis, which is only valid after call to car->build()
+        m_PhysIKACar.push_back(CreatePhysIKACar(m_car.back()));
     }
-    // Wrapper accesses car->m_chassis, which is only valid after call to car->build()
-    m_PhysIKACar.push_back(CreatePhysIKACar(m_car.back()));
 
     for (auto& rb_info : info.rigidbodies)
     {
