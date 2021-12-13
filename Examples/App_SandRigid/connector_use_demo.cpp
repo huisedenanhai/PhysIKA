@@ -61,7 +61,8 @@ void                connector_use_demo::createScene(const VPE::SandSimulationReg
         {
             VPE::Vec3 last_pos{};
             VPE::Quat last_quat{};
-            car->GetChassisPositionRotation(last_pos, last_quat);
+            auto      chassis = car->GetChassisRigidBody();
+            chassis->GetGlobalPositionRotation(last_pos, last_quat);
 
             printf("Last Pos { %f, %f, %f }, Last Quat { %f, %f, %f, %f }",
                    last_pos.x,
@@ -74,7 +75,7 @@ void                connector_use_demo::createScene(const VPE::SandSimulationReg
 
             total_time += dt;
             position.y = 1.0 + std::sin(total_time);
-            car->SetChassisPositionRotation(position, last_quat);
+            chassis->SetGlobalPositionRotation(position, last_quat);
         }
     };
 

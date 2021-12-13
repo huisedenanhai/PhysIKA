@@ -84,16 +84,26 @@ enum class PhysIKACarDirection
     Right
 };
 
+class PhysIKARigidBody
+{
+public:
+    PhysIKARigidBody();
+    ~PhysIKARigidBody();
+
+    void SetGlobalPositionRotation(const Vec3& pos, const Quat& rot);
+    void GetGlobalPositionRotation(Vec3& pos, Quat& rot);
+
+    struct Impl;
+    std::unique_ptr<Impl> _impl{};
+};
+
 class PhysIKACar
 {
 public:
     PhysIKACar();
     ~PhysIKACar();
-    void GetChassisPositionRotation(Vec3& pos, Quat& rot);
-    void GetWheelPositionRotation(uint32_t wheel_index, Vec3& pos, Quat& rot);
-
-    void SetChassisPositionRotation(const Vec3& pos, const Quat& rot);
-    void SetWheelPositionRotation(uint32_t wheel_index, const Vec3& pos, const Quat& rot);
+    std::shared_ptr<PhysIKARigidBody> GetChassisRigidBody();
+    std::shared_ptr<PhysIKARigidBody> GetWheelRigidBody(uint32_t wheel_index);
 
     // Car controls
     void Go(PhysIKACarDirection dir);
@@ -103,6 +113,14 @@ public:
     std::unique_ptr<Impl2> _impl2{};
 };
 
+struct PhysIKARigidBodyCreateInfo
+{
+    float       mass  = 0;
+    Vec3        scale = { 1.0f, 1.0f, 1.0f };
+    std::string triangle_path{};  // .obj
+    std::string sdf_path{};
+};
+
 struct SandSimulationRegionCreateInfo
 {
     float sand_layer_thickness;
@@ -110,11 +128,12 @@ struct SandSimulationRegionCreateInfo
 
     Vec3 center{};
     // ground height, index of data at (x, y) = height_data[y * resolution_x + x]
-    const double*                          height_data;
-    double                                 grid_physical_size;
-    int                                    height_resolution_x;
-    int                                    height_resolution_y;
-    std::vector<VPE::PhysIKACarCreateInfo> cars{};
+    const double*                           height_data;
+    double                                  grid_physical_size;
+    int                                     height_resolution_x;
+    int                                     height_resolution_y;
+    std::vector<VPE::PhysIKACarCreateInfo>  cars{};
+    std::vector<PhysIKARigidBodyCreateInfo> rigid_bodies{};
 };
 
 class SandSimulationRegion

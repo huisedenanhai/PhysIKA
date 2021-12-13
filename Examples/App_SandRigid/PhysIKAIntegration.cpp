@@ -94,6 +94,30 @@ bool ComputeBoundingBox(PhysIKA::Vector3f& center, PhysIKA::Vector3f& boxsize, c
 }
 }  // namespace
 
+struct PhysIKARigidBody::Impl
+{
+    void SetGlobalPositionRotation(const Vec3& pos, const Quat& rot)
+    {
+        SetRigidBodyGlobalPositionRotation(rigid_body, pos, rot);
+    }
+
+    void GetGlobalPositionRotation(Vec3& pos, Quat& rot)
+    {
+        GetRigidBodyGlobalPositionRotation(rigid_body, pos, rot);
+    }
+
+    std::shared_ptr<RigidBody2<DataType3f>> rigid_body{};
+};
+
+namespace {
+std::shared_ptr<PhysIKARigidBody> CreatePhysIKARigidBody(const std::shared_ptr<RigidBody2<DataType3f>>& rb)
+{
+    auto r               = std::make_shared<PhysIKARigidBody>();
+    r->_impl->rigid_body = rb;
+    return r;
+}
+}  // namespace
+
 struct SandSimulationRegion::Impl
 {  //impl
 public:
@@ -205,34 +229,9 @@ SandSimulationRegion::SandSimulationRegion()
 struct VPE::PhysIKACar::Impl2
 {
 public:
-    shared_ptr<PhysIKA::PBDCar> m_car;
-
-    Vector3f wheelupDirection;     //z
-    Vector3f wheelRightDirection;  // wheel right direction in car frame.
-
-    void GetChassisPositionRotation(VPE::Vec3& pos, VPE::Quat& rot)
-    {
-        auto chassis = m_car->getChassis();
-        GetRigidBodyGlobalPositionRotation(chassis, pos, rot);
-    }
-
-    void GetWheelPositionRotation(uint32_t wheel_index, Vec3& pos, Quat& rot)
-    {
-        auto wheel = m_car->getWheels(wheel_index);
-        GetRigidBodyGlobalPositionRotation(wheel, pos, rot);
-    }
-
-    void SetChassisPositionRotation(const Vec3& pos, const Quat& rot)
-    {
-        auto chassis = m_car->getChassis();
-        SetRigidBodyGlobalPositionRotation(chassis, pos, rot);
-    }
-
-    void SetWheelPositionRotation(uint32_t wheel_index, const Vec3& pos, const Quat& rot)
-    {
-        auto wheel = m_car->getWheels(wheel_index);
-        SetRigidBodyGlobalPositionRotation(wheel, pos, rot);
-    }
+    shared_ptr<PhysIKA::PBDCar>                    m_car;
+    std::shared_ptr<PhysIKARigidBody>              m_chassis_rigid_body{};
+    std::vector<std::shared_ptr<PhysIKARigidBody>> m_wheel_rigid_bodies{};
 
     void Go(PhysIKACarDirection dir)
     {
@@ -254,26 +253,36 @@ public:
                 break;
         }
     }
+
+    void Init(const std::shared_ptr<PhysIKA::PBDCar>& car)
+    {
+        m_car                = car;
+        m_chassis_rigid_body = CreatePhysIKARigidBody(car->m_chassis);
+        for (int i = 0; i < 4; i++)
+        {
+            m_wheel_rigid_bodies.push_back(
+                CreatePhysIKARigidBody(car->getWheels(i)));
+        }
+    }
 };
 
-void VPE::PhysIKACar::GetChassisPositionRotation(VPE::Vec3& pos, VPE::Quat& rot)
+namespace {
+std::shared_ptr<PhysIKACar> CreatePhysIKACar(const std::shared_ptr<PhysIKA::PBDCar>& car)
 {
-    return _impl2->GetChassisPositionRotation(pos, rot);  //?with static will call error.
+    auto c = std::make_shared<PhysIKACar>();
+    c->_impl2->Init(car);
+    return c;
+}
+}  // namespace
+
+std::shared_ptr<PhysIKARigidBody> PhysIKACar::GetChassisRigidBody()
+{
+    return _impl2->m_chassis_rigid_body;
 }
 
-void VPE::PhysIKACar::GetWheelPositionRotation(uint32_t wheel_index, Vec3& pos, Quat& rot)
+std::shared_ptr<PhysIKARigidBody> PhysIKACar::GetWheelRigidBody(uint32_t wheel_index)
 {
-    return _impl2->GetWheelPositionRotation(wheel_index, pos, rot);  //?with static will call error.
-}
-
-void VPE::PhysIKACar::SetChassisPositionRotation(const Vec3& pos, const Quat& rot)
-{
-    return _impl2->SetChassisPositionRotation(pos, rot);  //?with static will call error.
-}
-
-void VPE::PhysIKACar::SetWheelPositionRotation(uint32_t wheel_index, const Vec3& pos, const Quat& rot)
-{
-    return _impl2->SetWheelPositionRotation(wheel_index, pos, rot);  //?with static will call error.
+    return _impl2->m_wheel_rigid_bodies[wheel_index];
 }
 
 void VPE::PhysIKACar::Go(PhysIKACarDirection dir)
@@ -492,8 +501,6 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
             }
         }
         m_car.push_back(std::make_shared<PhysIKA::PBDCar>());
-        m_PhysIKACar.push_back(std::make_shared<VPE::PhysIKACar>());
-        m_PhysIKACar.back()->_impl2->m_car = m_car.back();
 
         // TODO over
         //newcarnumber
@@ -571,11 +578,31 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
             m_rigids.push_back(m_car[u]->m_wheels[i]);
         }
     }
+    // Wrapper accesses car->m_chassis, which is only valid after call to car->build()
+    m_PhysIKACar.push_back(CreatePhysIKACar(m_car.back()));
+
     interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
 }
 
 void SandSimulationRegion::AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
 {
     _impl->AddSDF(sdf_file, translate, rigid_id);
+}
+
+PhysIKARigidBody::PhysIKARigidBody()
+{
+    _impl = std::make_unique<Impl>();
+}
+
+PhysIKARigidBody::~PhysIKARigidBody() = default;
+
+void PhysIKARigidBody::SetGlobalPositionRotation(const Vec3& pos, const Quat& rot)
+{
+    _impl->SetGlobalPositionRotation(pos, rot);
+}
+
+void PhysIKARigidBody::GetGlobalPositionRotation(Vec3& pos, Quat& rot)
+{
+    _impl->GetGlobalPositionRotation(pos, rot);
 }
 }  // namespace VPE
