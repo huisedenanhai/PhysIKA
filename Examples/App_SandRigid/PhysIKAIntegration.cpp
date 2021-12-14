@@ -102,8 +102,12 @@ public:
         auto interactSolver = getInteractionSolver();
         auto densitySolver  = getDensitySolver();
         auto sandSolver     = getSandSolver();
+        auto rigidSolver    = getRigidSolver();
 
         interactSolver->setPreBodyInfo();
+        // the interaction solver reads body data from GPU buffer of rigid solver...
+        rigidSolver->updateRigidToGPUBody();
+
         interactSolver->updateBodyAverageVel(dt);
         if (interactSolver->m_prigids)
         {
