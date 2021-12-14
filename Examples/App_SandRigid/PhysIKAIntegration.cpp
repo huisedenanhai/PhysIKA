@@ -92,6 +92,36 @@ bool ComputeBoundingBox(PhysIKA::Vector3f& center, PhysIKA::Vector3f& boxsize, c
     boxsize = bmax - bmin;
     return true;
 }
+
+// The sand simulation region without PBD rigid body solver
+class SandSolverNode : public ParticleSandRigidInteraction
+{
+public:
+    void advance(Real dt) override
+    {
+        auto interactSolver = getInteractionSolver();
+        auto densitySolver  = getDensitySolver();
+        auto sandSolver     = getSandSolver();
+
+        interactSolver->setPreBodyInfo();
+        interactSolver->updateBodyAverageVel(dt);
+        if (interactSolver->m_prigids)
+        {
+            int nrigid = interactSolver->m_prigids->size();
+            for (int i = 0; i < nrigid; ++i)
+            {
+                interactSolver->computeSingleBody(i, dt);
+            }
+        }
+
+        // Solver sand density constraint.
+        densitySolver->forwardOneSubStep(dt);
+
+        sandSolver->velocityUpdate(dt);
+        sandSolver->positionUpdate(dt);
+        sandSolver->infoUpdate(dt);
+    }
+};
 }  // namespace
 
 struct PhysIKARigidBody::Impl
@@ -330,7 +360,15 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     car_cache = info.cars;
 
     // 1 Root node. Also the simulator.
-    root = std::make_shared<ParticleSandRigidInteraction>();
+    if (info.enable_rigid_simulation)
+    {
+        root = std::make_shared<ParticleSandRigidInteraction>();
+    }
+    else
+    {
+        root = std::make_shared<SandSolverNode>();
+    }
+
     root->setActive(true);
     root->setDt(info.time_delta);
 
@@ -623,11 +661,6 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
     interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
 }
 
-void SandSimulationRegion::AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
-{
-    _impl->AddSDF(sdf_file, translate, rigid_id);
-}
-
 PhysIKARigidBody::PhysIKARigidBody()
 {
     _impl = std::make_unique<Impl>();
@@ -644,4 +677,25 @@ void PhysIKARigidBody::GetGlobalPositionRotation(Vec3& pos, Quat& rot)
 {
     _impl->GetGlobalPositionRotation(pos, rot);
 }
+
+Vec3 PhysIKARigidBody::GetLinearVelocity()
+{
+    return FromPhysIKA(_impl->rigid_body->getLinearVelocity());
+}
+
+void PhysIKARigidBody::SetLinearVelocity(const Vec3& v)
+{
+    _impl->rigid_body->setAngularVelocity(ToPhysIKA(v));
+}
+
+Vec3 PhysIKARigidBody::GetAngularVelocity()
+{
+    return FromPhysIKA(_impl->rigid_body->getAngularVelocity());
+}
+
+void PhysIKARigidBody::SetAngularVelocity(const Vec3& w)
+{
+    _impl->rigid_body->setAngularVelocity(ToPhysIKA(w));
+}
+
 }  // namespace VPE

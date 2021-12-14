@@ -50,15 +50,16 @@ void                connector_use_demo::createScene()
     }
 
     VPE::SandSimulationRegionCreateInfo info;
-    info.center.y             = 100;
-    info.center.x             = 2;
-    info.center.z             = 2;
-    info.grid_physical_size   = 10.0 / 256;
-    info.sand_layer_thickness = 0.02;
-    info.time_delta           = 0.016;
-    info.height_data          = &data[0];
-    info.height_resolution_x  = 256;
-    info.height_resolution_y  = 256;
+    info.enable_rigid_simulation = false;
+    info.center.y                = 100;
+    info.center.x                = 2;
+    info.center.z                = 2;
+    info.grid_physical_size      = 10.0 / 256;
+    info.sand_layer_thickness    = 0.02;
+    info.time_delta              = 0.016;
+    info.height_data             = &data[0];
+    info.height_resolution_x     = 256;
+    info.height_resolution_y     = 256;
 
     VPE::PhysIKACarCreateInfo carobject;
     info.cars.push_back(carobject);
@@ -145,8 +146,14 @@ void                connector_use_demo::createScene()
             chassis->SetGlobalPositionRotation(last_pos, last_quat);
 
             rigidbody->SetGlobalPositionRotation(
-                { 1, std::sin(total_time * 10.0f) + 1.0f, 2.0f },
+                { std::cos(total_time * 10.0f), 0.5, std::sin(total_time * 10.0f) },
                 { 0, 0, 0, 1 });
+            rigidbody->SetLinearVelocity(
+                {
+                    -std::sin(total_time * 10.0f) * 10.0f,
+                    0.0f,
+                    std::cos(total_time * 10.0f) * 10.0f,
+                });
         }
     };
 

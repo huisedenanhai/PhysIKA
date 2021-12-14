@@ -92,6 +92,10 @@ public:
 
     void SetGlobalPositionRotation(const Vec3& pos, const Quat& rot);
     void GetGlobalPositionRotation(Vec3& pos, Quat& rot);
+    Vec3 GetLinearVelocity();
+    void SetLinearVelocity(const Vec3& v);
+    Vec3 GetAngularVelocity();
+    void SetAngularVelocity(const Vec3& w);
 
     struct Impl;
     std::unique_ptr<Impl> _impl{};
@@ -125,6 +129,7 @@ struct SandSimulationRegionCreateInfo
 {
     float sand_layer_thickness;
     float time_delta;
+    bool  enable_rigid_simulation = true;
 
     Vec3 center{};
     // ground height, index of data at (x, y) = height_data[y * resolution_x + x]
@@ -146,10 +151,6 @@ public:
     std::shared_ptr<VPE::PhysIKACar>       GetCar(uint64_t car_index);
     std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index);
     std::vector<VPE::Vec3>                 GetSandParticles();
-
-    // SDF interacts with sand
-    // rigid_id is get by calling RigidBody::getId
-    void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id);
 
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
 
