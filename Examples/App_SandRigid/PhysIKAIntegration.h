@@ -10,6 +10,7 @@
 // Set PHYSIKA_INTEGRATION_INIT_RENDER to 0 disables render initialization
 // Set PHYSIKA_INTEGRATION_INIT_RENDER to 1 to enable render initialization
 #define PHYSIKA_INTEGRATION_INIT_RENDER 1
+#define PHYSIKA_INTEGRATION_ENABLE_VIWO_PROFILE 0
 
 namespace PhysIKA {
 class Node;

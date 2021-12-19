@@ -1,4 +1,11 @@
 #include "PhysIKAIntegration.h"
+
+#if PHYSIKA_INTEGRATION_ENABLE_VIWO_PROFILE > 0
+#include "ViWoProfile.h"
+#else
+#define VIWO_PROFILE_SCOPE_SAMPLE(tag)
+#endif
+
 #include <vector>
 #include <Dynamics/RigidBody/RigidUtil.h>
 #include <Dynamics/RigidBody/PBDRigid/PBDSolverNode.h>
@@ -99,31 +106,61 @@ class SandSolverNode : public ParticleSandRigidInteraction
 public:
     void advance(Real dt) override
     {
+        VIWO_PROFILE_SCOPE_SAMPLE("Advance Sand Solver");
         auto interactSolver = getInteractionSolver();
         auto densitySolver  = getDensitySolver();
         auto sandSolver     = getSandSolver();
         auto rigidSolver    = getRigidSolver();
 
-        interactSolver->setPreBodyInfo();
-        // the interaction solver reads body data from GPU buffer of rigid solver...
-        rigidSolver->updateRigidToGPUBody();
-
-        interactSolver->updateBodyAverageVel(dt);
-        if (interactSolver->m_prigids)
         {
-            int nrigid = interactSolver->m_prigids->size();
-            for (int i = 0; i < nrigid; ++i)
+            VIWO_PROFILE_SCOPE_SAMPLE("Update Interaction Solver");
             {
-                interactSolver->computeSingleBody(i, dt);
+                VIWO_PROFILE_SCOPE_SAMPLE("Set Pre Body Info");
+                interactSolver->setPreBodyInfo();
+            }
+            {
+                VIWO_PROFILE_SCOPE_SAMPLE("Update Rigid To GPU Body");
+                // the interaction solver reads body data from GPU buffer of rigid solver...
+                rigidSolver->updateRigidToGPUBody();
+            }
+            {
+                VIWO_PROFILE_SCOPE_SAMPLE("Updata Body Average Vel");
+                interactSolver->updateBodyAverageVel(dt);
+            }
+            {
+                VIWO_PROFILE_SCOPE_SAMPLE("Compute Bodies");
+                if (interactSolver->m_prigids)
+                {
+                    int nrigid = interactSolver->m_prigids->size();
+                    for (int i = 0; i < nrigid; ++i)
+                    {
+                        interactSolver->computeSingleBody(i, dt);
+                    }
+                }
             }
         }
 
-        // Solver sand density constraint.
-        densitySolver->forwardOneSubStep(dt);
+        {
+            VIWO_PROFILE_SCOPE_SAMPLE("Advance Density");
+            // Solver sand density constraint.
+            densitySolver->forwardOneSubStep(dt);
+        }
 
-        sandSolver->velocityUpdate(dt);
-        sandSolver->positionUpdate(dt);
-        sandSolver->infoUpdate(dt);
+        {
+            VIWO_PROFILE_SCOPE_SAMPLE("Advance Sand");
+            sandSolver->velocityUpdate(dt);
+            sandSolver->positionUpdate(dt);
+            sandSolver->infoUpdate(dt);
+        }
+    }
+};
+
+class DummyPBDSolverNode : public PBDSolverNode
+{
+public:
+    void advance(Real dt) override
+    {
+        // do nothing
     }
 };
 }  // namespace
@@ -492,7 +529,14 @@ inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInf
 
     /// ------  Rigid ------------
     //13 PBD simulation
-    rigidSim = std::make_shared<PhysIKA::PBDSolverNode>();
+    if (info.enable_rigid_simulation)
+    {
+        rigidSim = std::make_shared<PhysIKA::PBDSolverNode>();
+    }
+    else
+    {
+        rigidSim = std::make_shared<DummyPBDSolverNode>();
+    }
     rigidSim->getSolver()->setUseGPU(true);
     rigidSim->needForward(false);
     rigidSolver = rigidSim->getSolver();
