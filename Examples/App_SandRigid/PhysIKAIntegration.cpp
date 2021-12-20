@@ -134,6 +134,20 @@ public:
                     int nrigid = interactSolver->m_prigids->size();
                     for (int i = 0; i < nrigid; ++i)
                     {
+                        auto     rb        = interactSolver->m_prigids->at(i);
+                        auto     center    = rb->getGlobalR();
+                        auto     radius    = rb->getRadius();
+                        auto     hf        = interactSolver->m_land;
+                        auto     hf_center = hf->getOrigin();
+                        Vector2f hf_size   = {
+                            float(hf->Nx() * hf->getDx()),
+                            float(hf->Ny() * hf->getDz()),
+                        };
+                        // Cull Sphere
+                        if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
+                        {
+                            continue;
+                        }
                         interactSolver->computeSingleBody(i, dt);
                     }
                 }
