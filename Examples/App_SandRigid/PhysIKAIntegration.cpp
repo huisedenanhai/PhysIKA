@@ -144,7 +144,7 @@ public:
                             float(hf->Ny() * hf->getDz()),
                         };
                         // Cull Sphere
-                        if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
+                        if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[0] - radius > hf_center[0] + hf_size[0] * 0.5f || center[2] + radius < hf_center[2] - hf_size[1] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
                         {
                             continue;
                         }
