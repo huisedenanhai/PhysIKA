@@ -258,7 +258,7 @@ public:
         auto                           particle_num = pos_d.size();
         std::vector<PhysIKA::Vector3d> positions{};
         positions.resize(particle_num);
-        cudaMemcpy(positions.data(), &pos_d[0], sizeof(PhysIKA::Vector3d) * particle_num, cudaMemcpyDeviceToHost);
+        cudaMemcpy(positions.data(), pos_d.begin(), sizeof(PhysIKA::Vector3d) * particle_num, cudaMemcpyDeviceToHost);
         std::vector<VPE::Vec3> result{};
         result.reserve(particle_num);
         for (const auto& p : positions)
@@ -268,6 +268,13 @@ public:
         }
 
         return result;
+    }
+
+    double* GetSandParticlesDevicePtr(size_t& particle_num)
+    {
+        auto& pos_d  = psandSolver->getParticlePosition3D();
+        particle_num = pos_d.size();
+        return reinterpret_cast<double*>(pos_d.begin());
     }
 
     void Init(const SandSimulationRegionCreateInfo& info);
@@ -300,6 +307,11 @@ std::shared_ptr<VPE::PhysIKARigidBody> SandSimulationRegion::GetRigidBody(uint64
 std::vector<VPE::Vec3> SandSimulationRegion::GetSandParticles()
 {
     return _impl->GetSandParticles();
+}
+
+double* SandSimulationRegion::GetSandParticlesDevicePtr(size_t& particle_num)
+{
+    return _impl->GetSandParticlesDevicePtr(particle_num);
 }
 
 std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Create(const SandSimulationRegionCreateInfo& info)

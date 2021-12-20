@@ -152,6 +152,8 @@ public:
     std::shared_ptr<VPE::PhysIKACar>       GetCar(uint64_t car_index);
     std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index);
     std::vector<VPE::Vec3>                 GetSandParticles();
+    // Cuda device pointer, array of tightly packed dvec3
+    double* GetSandParticlesDevicePtr(size_t& particle_num);
 
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
 
