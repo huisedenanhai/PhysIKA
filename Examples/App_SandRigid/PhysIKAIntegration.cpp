@@ -112,6 +112,7 @@ public:
         auto sandSolver     = getSandSolver();
         auto rigidSolver    = getRigidSolver();
 
+        bool should_update_sand = false;
         {
             VIWO_PROFILE_SCOPE_SAMPLE("Update Interaction Solver");
             {
@@ -149,6 +150,7 @@ public:
                             continue;
                         }
                         interactSolver->computeSingleBody(i, dt);
+                        should_update_sand = true;
                     }
                 }
             }
@@ -160,6 +162,7 @@ public:
             densitySolver->forwardOneSubStep(dt);
         }
 
+        if (should_update_sand)
         {
             VIWO_PROFILE_SCOPE_SAMPLE("Advance Sand");
             sandSolver->velocityUpdate(dt);
