@@ -23,6 +23,7 @@ int main()
     std::cout << "   0:  Car running on sand." << std::endl;
     std::cout << "   1:  Sand-rigid coupling." << std::endl;
     std::cout << "   2:  HeightFieldtext-wei" << std::endl;
+    std::cout << "   3:  Sand-Rigid Height Field" << std::endl;
     std::cout << "   4:  Á½Á¾³µ" << std::endl;
     std::cout << "   5:  connector" << std::endl;
     int caseid = 0;
@@ -68,6 +69,7 @@ int main()
             demo->run();
             break;
         }
+
         default:
             break;
     }

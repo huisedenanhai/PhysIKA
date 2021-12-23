@@ -112,9 +112,38 @@ public:
         auto sandSolver     = getSandSolver();
         auto rigidSolver    = getRigidSolver();
 
-        bool should_update_sand = false;
+        std::vector<int> rb_to_update{};
+        {
+            if (interactSolver->m_prigids)
+            {
+                int nrigid = interactSolver->m_prigids->size();
+                for (int i = 0; i < nrigid; ++i)
+                {
+                    auto     rb        = interactSolver->m_prigids->at(i);
+                    auto     center    = rb->getGlobalR();
+                    auto     radius    = rb->getRadius();
+                    auto     hf        = interactSolver->m_land;
+                    auto     hf_center = hf->getOrigin();
+                    Vector2f hf_size   = {
+                        float(hf->Nx() * hf->getDx()),
+                        float(hf->Ny() * hf->getDz()),
+                    };
+                    // Cull Sphere
+                    if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[0] - radius > hf_center[0] + hf_size[0] * 0.5f || center[2] + radius < hf_center[2] - hf_size[1] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
+                    {
+                        continue;
+                    }
+                    rb_to_update.push_back(i);
+                }
+            }
+        }
+        if (rb_to_update.empty())
+        {
+            return;
+        }
         {
             VIWO_PROFILE_SCOPE_SAMPLE("Update Interaction Solver");
+
             {
                 VIWO_PROFILE_SCOPE_SAMPLE("Set Pre Body Info");
                 interactSolver->setPreBodyInfo();
@@ -130,28 +159,9 @@ public:
             }
             {
                 VIWO_PROFILE_SCOPE_SAMPLE("Compute Bodies");
-                if (interactSolver->m_prigids)
+                for (auto index : rb_to_update)
                 {
-                    int nrigid = interactSolver->m_prigids->size();
-                    for (int i = 0; i < nrigid; ++i)
-                    {
-                        auto     rb        = interactSolver->m_prigids->at(i);
-                        auto     center    = rb->getGlobalR();
-                        auto     radius    = rb->getRadius();
-                        auto     hf        = interactSolver->m_land;
-                        auto     hf_center = hf->getOrigin();
-                        Vector2f hf_size   = {
-                            float(hf->Nx() * hf->getDx()),
-                            float(hf->Ny() * hf->getDz()),
-                        };
-                        // Cull Sphere
-                        if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[0] - radius > hf_center[0] + hf_size[0] * 0.5f || center[2] + radius < hf_center[2] - hf_size[1] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
-                        {
-                            continue;
-                        }
-                        interactSolver->computeSingleBody(i, dt);
-                        should_update_sand = true;
-                    }
+                    interactSolver->computeSingleBody(index, dt);
                 }
             }
         }
@@ -162,7 +172,6 @@ public:
             densitySolver->forwardOneSubStep(dt);
         }
 
-        if (should_update_sand)
         {
             VIWO_PROFILE_SCOPE_SAMPLE("Advance Sand");
             sandSolver->velocityUpdate(dt);
@@ -280,6 +289,13 @@ public:
         return reinterpret_cast<double*>(pos_d.begin());
     }
 
+    double* GetSandParticlesRhoDevicePtr(size_t& particle_num)
+    {
+        auto& rho_d  = psandSolver->getParticleRho2D();
+        particle_num = rho_d.size();
+        return reinterpret_cast<double*>(rho_d.begin());
+    }
+
     void Init(const SandSimulationRegionCreateInfo& info);
 
     void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
@@ -315,6 +331,11 @@ std::vector<VPE::Vec3> SandSimulationRegion::GetSandParticles()
 double* SandSimulationRegion::GetSandParticlesDevicePtr(size_t& particle_num)
 {
     return _impl->GetSandParticlesDevicePtr(particle_num);
+}
+
+double* SandSimulationRegion::GetSandParticlesRhoDevicePtr(size_t& particle_num)
+{
+    return _impl->GetSandParticlesRhoDevicePtr(particle_num);
 }
 
 std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Create(const SandSimulationRegionCreateInfo& info)

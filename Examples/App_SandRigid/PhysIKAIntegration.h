@@ -154,6 +154,8 @@ public:
     std::vector<VPE::Vec3>                 GetSandParticles();
     // Cuda device pointer, array of tightly packed dvec3
     double* GetSandParticlesDevicePtr(size_t& particle_num);
+    // density of sand. tighly packed double
+    double* GetSandParticlesRhoDevicePtr(size_t& particle_num);
 
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
 
