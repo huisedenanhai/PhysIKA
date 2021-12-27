@@ -215,7 +215,7 @@ std::shared_ptr<PhysIKARigidBody> CreatePhysIKARigidBody(const std::shared_ptr<R
 }
 }  // namespace
 
-struct SandSimulationRegion::Impl
+struct ParticleSandSimulationRegion : public SandSimulationRegion
 {  //impl
 public:
     std::shared_ptr<PhysIKA::Node>         node;
@@ -250,12 +250,12 @@ public:
     PhysIKA::HostHeightField1d          landHeight;
     std::shared_ptr<PhysIKA::PBDSolver> rigidSolver;
 
-    std::shared_ptr<PhysIKA::Node> GetRoot()  //rootParticleSandRigidInteraction
+    std::shared_ptr<PhysIKA::Node> GetRoot() override  //rootParticleSandRigidInteraction
     {
         return root;
     }
 
-    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle)  //car_handle
+    std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle) override  //car_handle
     {
         if (car_handle < newcarnumber)
         {
@@ -264,7 +264,7 @@ public:
         return nullptr;
     }
 
-    std::vector<VPE::Vec3> GetSandParticles()  ////VPE::Vec3*
+    std::vector<VPE::Vec3> GetSandParticles() override  ////VPE::Vec3*
     {
         auto&                          pos_d        = psandSolver->getParticlePosition3D();
         auto                           particle_num = pos_d.size();
@@ -282,14 +282,14 @@ public:
         return result;
     }
 
-    double* GetSandParticlesDevicePtr(size_t& particle_num)
+    double* GetSandParticlesDevicePtr(size_t& particle_num) override
     {
         auto& pos_d  = psandSolver->getParticlePosition3D();
         particle_num = pos_d.size();
         return reinterpret_cast<double*>(pos_d.begin());
     }
 
-    double* GetSandParticlesRhoDevicePtr(size_t& particle_num)
+    double* GetSandParticlesRhoDevicePtr(size_t& particle_num) override
     {
         auto& rho_d  = psandSolver->getParticleRho2D();
         particle_num = rho_d.size();
@@ -306,51 +306,26 @@ public:
         sdf.translate(ToPhysIKA(translate));
         interactionSolver->addSDF(sdf, rigid_id);
     }
+
+    std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index)
+    {
+        return m_rigidbody_wrappers[rb_index];
+    }
 };
-
-std::shared_ptr<PhysIKA::Node> SandSimulationRegion::GetRoot()
-{
-    return _impl->GetRoot();
-}
-
-std::shared_ptr<VPE::PhysIKACar> SandSimulationRegion::GetCar(uint64_t car_handle)
-{
-    return _impl->GetCar(car_handle);
-}
-
-std::shared_ptr<VPE::PhysIKARigidBody> SandSimulationRegion::GetRigidBody(uint64_t rb_index)
-{
-    return _impl->m_rigidbody_wrappers[rb_index];
-}
-
-std::vector<VPE::Vec3> SandSimulationRegion::GetSandParticles()
-{
-    return _impl->GetSandParticles();
-}
-
-double* SandSimulationRegion::GetSandParticlesDevicePtr(size_t& particle_num)
-{
-    return _impl->GetSandParticlesDevicePtr(particle_num);
-}
-
-double* SandSimulationRegion::GetSandParticlesRhoDevicePtr(size_t& particle_num)
-{
-    return _impl->GetSandParticlesRhoDevicePtr(particle_num);
-}
 
 std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Create(const SandSimulationRegionCreateInfo& info)
 {
-    auto region = std::make_shared<SandSimulationRegion>();
+    switch (info.sand_solver_algorithm)
+    {
+        case SandSolverAlgorithm::HeightField:
+            // TODO Height Field Sand Sim Region
+        case SandSolverAlgorithm::Particle: {
 
-    auto impl = region->_impl.get();
-    impl->Init(info);
-    return region;
-}
-
-SandSimulationRegion::~SandSimulationRegion() = default;
-SandSimulationRegion::SandSimulationRegion()
-{
-    _impl = std::make_unique<Impl>();
+            auto region = std::make_shared<ParticleSandSimulationRegion>();
+            region->Init(info);
+            return region;
+        }
+    }
 }
 
 struct VPE::PhysIKACar::Impl2
@@ -423,7 +398,7 @@ VPE::PhysIKACar::PhysIKACar()
     _impl2 = std::make_unique<Impl2>();
 }
 
-inline void SandSimulationRegion::Impl::Init(const SandSimulationRegionCreateInfo& info)  //info
+inline void ParticleSandSimulationRegion::Init(const SandSimulationRegionCreateInfo& info)  //info
 {
     //build
     sandinfo.nx               = info.height_resolution_x;

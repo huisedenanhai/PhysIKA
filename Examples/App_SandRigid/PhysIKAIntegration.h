@@ -152,22 +152,18 @@ struct SandSimulationRegionCreateInfo
 class SandSimulationRegion
 {
 public:
-    SandSimulationRegion();
-    ~SandSimulationRegion();
+    virtual ~SandSimulationRegion() = default;
 
-    std::shared_ptr<PhysIKA::Node>         GetRoot();
-    std::shared_ptr<VPE::PhysIKACar>       GetCar(uint64_t car_index);
-    std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index);
-    std::vector<VPE::Vec3>                 GetSandParticles();
+    virtual std::shared_ptr<PhysIKA::Node>         GetRoot()                       = 0;
+    virtual std::shared_ptr<VPE::PhysIKACar>       GetCar(uint64_t car_index)      = 0;
+    virtual std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index) = 0;
+    virtual std::vector<VPE::Vec3>                 GetSandParticles()              = 0;
     // Cuda device pointer, array of tightly packed dvec3
-    double* GetSandParticlesDevicePtr(size_t& particle_num);
+    virtual double* GetSandParticlesDevicePtr(size_t& particle_num) = 0;
     // density of sand. tighly packed double
-    double* GetSandParticlesRhoDevicePtr(size_t& particle_num);
+    virtual double* GetSandParticlesRhoDevicePtr(size_t& particle_num) = 0;
 
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
-
-    struct Impl;
-    std::unique_ptr<Impl> _impl;
 };
 
 }  // namespace VPE
