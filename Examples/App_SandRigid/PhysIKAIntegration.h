@@ -126,11 +126,18 @@ struct PhysIKARigidBodyCreateInfo
     std::string sdf_path{};
 };
 
+enum class SandSolverAlgorithm
+{
+    HeightField,
+    Particle
+};
+
 struct SandSimulationRegionCreateInfo
 {
-    float sand_layer_thickness;
-    float time_delta;
-    bool  enable_rigid_simulation = true;
+    float               sand_layer_thickness;
+    float               time_delta;
+    bool                enable_rigid_simulation = true;
+    SandSolverAlgorithm sand_solver_algorithm   = SandSolverAlgorithm::HeightField;
 
     Vec3 center{};
     // ground height, index of data at (x, y) = height_data[y * resolution_x + x]
