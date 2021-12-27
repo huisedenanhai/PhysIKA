@@ -373,7 +373,7 @@ public:
                 m_instance->m_car->goRight(0.016);
                 break;
             case 'w':
-                m_instance->m_car->forward(0.016);
+                m_instance->m_car->forward(0.016);//也匹配到多轮车去了。。
                 break;
             case 's':
                 m_instance->m_car->backward(0.016);

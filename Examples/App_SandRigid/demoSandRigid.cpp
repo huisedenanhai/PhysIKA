@@ -194,6 +194,9 @@ void                             DemoHeightFieldSandRigid_Sphere::createScene()
 
         /// rigids body
         auto prigid = std::make_shared<RigidBody2<DataType3f>>("rigid");
+		Vector3f linv;
+		for(int i=0;i<3;i++)linv[0]= 1;
+		prigid->setLinearVelocity(linv);
         int  id     = rigidSim->addRigid(prigid);
 
         auto renderModule = std::make_shared<RigidMeshRender>(prigid->getTransformationFrame());
@@ -268,9 +271,10 @@ void                             DemoHeightFieldSandRigid_Sphere::createScene()
     Vector3f camPos(0, 3, 3.5);
     camera_.lookAt(camPos, Vector3f(0, 0, 0.), Vector3f(0, 1, 0));
 
-    this->disableDisplayFrameRate();
-    //this->enableDisplayFrameRate();
-    this->enableDisplayFrame();
+    //this->disableDisplayFrameRate();
+    this->enableDisplayFrameRate();
+	//cout << ;
+    //this->enableDisplayFrame();
 }
 
 DemoHeightFieldSandLandRigid* DemoHeightFieldSandLandRigid::m_instance = 0;
@@ -879,20 +883,20 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     sandinfo.nx               = 64 * 4;
     sandinfo.ny               = 64 * 4;
     sandinfo.griddl           = 0.03;
-    sandinfo.mu               = 0.9;
+    sandinfo.mu               = 0.7;
     sandinfo.drag             = 0.95;
     sandinfo.slide            = 10 * sandinfo.griddl;
     sandinfo.sandRho          = 1000.0;
     double sandParticleHeight = 0.1;
 
     SceneGraph& scene = SceneGraph::getInstance();
-    scene.setUpperBound(Vector3f(100, 100, 100));
-    scene.setLowerBound(Vector3f(-100, -100, -100));
+    scene.setUpperBound(Vector3f(10, 10, 10));//100
+    scene.setLowerBound(Vector3f(-10, -5, -10));//-100
 
     // Root node. Also the simulator.
     std::shared_ptr<HeightFieldSandRigidInteraction> root = scene.createNewScene<HeightFieldSandRigidInteraction>();
     root->setActive(true);
-    root->setDt(0.02);
+    root->setDt(0.001);
     auto interactionSolver = root->getInteractionSolver();
 
     root->varCHorizontal()->setValue(1.);
@@ -903,9 +907,9 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     //
     std::shared_ptr<SandSimulator> sandSim     = std::make_shared<SandSimulator>();
     std::shared_ptr<SSESandSolver> psandSolver = std::make_shared<SSESandSolver>();
-    m_psandsolver                              = psandSolver;
-    psandSolver->setCFLNumber(0.3);
-    sandSim->needForward(false);
+    //m_psandsolver                              = psandSolver;
+    psandSolver->setCFLNumber(0.3);//0.3
+    sandSim->needForward(true);//false
     sandSim->setSandSolver(psandSolver);
     root->setSandSolver(psandSolver);
     root->addChild(sandSim);
@@ -931,8 +935,8 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     hfloader.load(hosthf, "../../Media/HeightFieldImg/terrain_lying2.png");
 
     // land
-    float lhland = 0.4;
-    float dhland = lhland / sandinfo.nx * 2;
+    //float lhland = 0.4;
+    //float dhland = lhland / sandinfo.nx * 2;
     for (int i = 0; i < sandinfo.nx; ++i)
     {
         for (int j = 0; j < sandinfo.ny; ++j)
@@ -1015,7 +1019,7 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     DistanceField3D<DataType3f> wheelSDF[4];
     // Load car mesh.
     {
-        Vector3f boundingsize;
+        //Vector3f boundingsize;
         // Chassis mesh.
         ObjFileLoader chassisLoader("../../Media/car2/chassis_cube.obj");
 
@@ -1023,8 +1027,8 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
         chassisTri->setPoints(chassisLoader.getVertexList());
         chassisTri->setTriangles(chassisLoader.getFaceList());
         computeBoundingBox(chassisCenter, chassisSize, chassisLoader.getVertexList());
-        chassisCenter *= scale3f;
-        chassisSize *= scale3f;
+        /*chassisCenter *= scale3f;
+        chassisSize *= scale3f;*/
         chassisTri->scale(scale3f);
         chassisTri->translate(-chassisCenter);
 
@@ -1045,8 +1049,8 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
             wheelTri[i]->setPoints(wheelLoader.getVertexList());
             wheelTri[i]->setTriangles(wheelLoader.getFaceList());
             computeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());
-            wheelCenter[i] *= scale3f;
-            wheelSize[i] *= scale3f;
+           /* wheelCenter[i] *= scale3f;
+            wheelSize[i] *= scale3f;*/
             wheelTri[i]->scale(scale3f);
             wheelTri[i]->translate(-wheelCenter[i]);
 
@@ -1081,10 +1085,10 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     m_car->wheelupDirection    = Vector3f(0, 1, 0);
     m_car->wheelRightDirection = Vector3f(1, 0, 0);
 
-    m_car->chassisMass    = 5000;  // 00;
+    m_car->chassisMass    = 1500;  // 00;
     m_car->chassisInertia = RigidUtil::calculateCubeLocalInertia(m_car->chassisMass, chassisSize);
 
-    float wheelm = 150;
+    float wheelm = 30;
     //float wheelRad = wheelTri[0][1]
     Vector3f wheelI        = RigidUtil::calculateCylinderLocalInertia(wheelm,
                                                                (wheelSize[0][1] + wheelSize[0][2]) / 2.0,
@@ -1102,13 +1106,13 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     m_car->steeringLowerBound = -0.5;
     m_car->steeringUpperBound = 0.5;
 
-    m_car->forwardForceAcc = 1000;
+    m_car->forwardForceAcc = 10000;
     //m_car->breakForceAcc ;
     m_car->steeringSpeed = 1.0;
     m_car->maxVel        = 2.5;
 
     // Build.
-    m_car->build();
+    m_car->build();//为啥匹配到多轮车去了？
 
     // Add visualization module and topology module.
     m_car->m_chassis->setTopologyModule(chassisTri);

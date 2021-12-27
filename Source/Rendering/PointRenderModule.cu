@@ -123,6 +123,8 @@ __global__ void PRM_MappingColor(
 
 void PointRenderModule::updateRenderingContext()
 {
+	//clock_t  start, end;
+	//start = clock();
     Node* parent = getParent();
     if (parent == NULL)
     {
@@ -178,6 +180,9 @@ void PointRenderModule::updateRenderingContext()
     //	m_pointRender->setColorArray(*(DeviceArray<float3>*)m_colorArray.get());
 
     m_pointRender->setVertexArray(*xyz);
+
+	//end = clock();
+	//std::cout << "rendertime=" << double(end - start) / 1000.0;
 }
 
 void PointRenderModule::display()

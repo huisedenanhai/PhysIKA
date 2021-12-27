@@ -321,6 +321,8 @@ bool HeightFieldTerrainRigidInteractionNode::_test(Real dt)
 
     //depth[0];
 
+	std::cout << "coupling here!" << std::endl;
+
     auto allRigids = m_rigidSystem->getAllNode();
     auto fdsolver  = m_rigidSystem->getModule<RigidTimeIntegrationModule>();
     m_rigidSystem->collectForceState();  // Update external force.
@@ -408,7 +410,7 @@ bool HeightFieldTerrainRigidInteractionNode::_test(Real dt)
         {
             contactPoints[contactN++] = std::make_pair(i, maxdep);
 
-            if (solveFriction)
+            if (false)//(solveFriction)
             {
                 int           fnid      = contactN - 1;
                 ContactPointX contactt1 = maxdep;

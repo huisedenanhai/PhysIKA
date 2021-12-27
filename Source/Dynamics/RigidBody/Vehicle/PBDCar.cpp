@@ -177,6 +177,9 @@ void PBDCar::advance(Real dt)
     //_updateWheelRotation(dt);
 
     //this->updateForce(dt);
+	clock_t start, end;
+
+	start = clock();
     if (!m_accPressed)
     {
         forwardForce = 0;
@@ -186,6 +189,9 @@ void PBDCar::advance(Real dt)
     this->_updateWheelRotation(dt);
     this->_doVelConstraint(dt);
     this->m_rigidSolver->setBodyDirty();
+
+	end = clock();
+	std::cout << "car time = " << (end - start) / 1000.0f << std::endl;
 
     //Vector3f carVel = m_chassis->getLinearVelocity();
     //printf("Car Vel:  %lf %lf %lf \n", carVel[0], carVel[1], carVel[2]);
