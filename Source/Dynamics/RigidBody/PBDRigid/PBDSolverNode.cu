@@ -27,9 +27,14 @@ bool PBDSolverNode::initialize()
 //template<typename TReal>
 void PBDSolverNode::advance(Real dt)
 {
+	clock_t start, end;
+	start = clock();
 
     if (m_needForward)
         m_solver->advance(dt);
+
+	end = clock();
+	std::cout<<"PBDSolvertime="<<double(end - start) / 1000.0;
 }
 
 //template<typename TReal>

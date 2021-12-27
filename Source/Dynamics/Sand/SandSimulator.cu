@@ -92,14 +92,20 @@ void PhysIKA::SandSimulator::advance(Real dt)
 
     while (true)
     {
-        float timeStep = dt > maxTimeStep ? maxTimeStep : dt;
-        std::cout << "    Time step:  " << timeStep << std::endl;
+		float timeStep = 0.001f;//dt > maxTimeStep ? maxTimeStep : dt;
+        std::cout << "sand simulator:    Time step:  " << timeStep << std::endl;
 
+		clock_t start, end;
+
+		start = clock();
         m_psandSolver->stepSimulation(timeStep);
+		end = clock();
+		
+		std::cout << "sand simulation time: " << double(end - start) / 1000.0f << std::endl;
 
-        if (dt > maxTimeStep)
+        /*if (dt > maxTimeStep)
             dt -= maxTimeStep;
-        else
+        else*/
             break;
     }
 

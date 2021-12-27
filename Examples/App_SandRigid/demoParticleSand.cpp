@@ -449,7 +449,7 @@ void                          DemoParticleSandRigid_Sphere::createScene()
     // Rendering module of simulator.
     auto pRenderModule = std::make_shared<PointRenderModule>();
     //pRenderModule->varRenderMode()->getValue().currentKey() = PointRenderModule::RenderModeEnum::SPRITE;
-    pRenderModule->setSphereInstaceSize(sandinfo.griddl * 0.5);
+    pRenderModule->setSphereInstaceSize(sandinfo.griddl * 0.5);//0.5
     //pRenderModule->setColor(Vector3f(1.0f, 1.0f, 122.0f / 255.0f));
     pRenderModule->setColor(Vector3f(1.0f * 0.9, 0.9f * 0.9, 122.0f / 255.0f * 0.9));
 

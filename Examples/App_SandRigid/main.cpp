@@ -45,7 +45,12 @@ int main()
         }
         case 2: {  //小车不稳，自动解体，问一下肖
             DemoHeightFieldSandLandMultiRigid2* demo = DemoHeightFieldSandLandMultiRigid2::getInstance();
-            demo->createScene();
+			/*clock_t start, end;
+			start = clock();*/
+			demo->createScene();
+			/*end = clock();
+			printf("createtime=%f", double(end - start) / 1000);*/
+
             demo->run();
             break;
         }
@@ -69,6 +74,19 @@ int main()
             demo->run();
             break;
         }
+
+		case 6: {  //
+			DemoHeightFieldSandRigid_Sphere* demo = DemoHeightFieldSandRigid_Sphere::getInstance();
+			demo->createScene();
+			demo->run();
+			break;
+		}
+		case 7: {  //
+			DemoHeightFieldSandLandRigid* demo = DemoHeightFieldSandLandRigid::getInstance();
+			demo->createScene();
+			demo->run();
+			break;
+		}
 
         default:
             break;

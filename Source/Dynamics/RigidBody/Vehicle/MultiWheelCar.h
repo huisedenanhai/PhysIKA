@@ -284,7 +284,10 @@ bool MultiWheelCar<N>::build()
 template <int N>
 void MultiWheelCar<N>::advance(Real dt)
 {
+	printf("inside multi wheel car\n");
+	clock_t start, end;
 
+	start = clock();
     //this->updateForce(dt);
     if (!m_accPressed)
     {
@@ -293,10 +296,14 @@ void MultiWheelCar<N>::advance(Real dt)
     }
     m_accPressed = false;
 
+
     //this->_updateWheelRotation(dt);
     this->_doVelConstraint(dt);
     this->m_rigidSolver->setBodyDirty();
 
+	end = clock();
+
+	std::cout << "multi car time = " << (end - start) / 1000.0f << std::endl;
     //Vector3f carVel = m_chassis->getLinearVelocity();
     //printf("Car Vel:  %lf %lf %lf \n", carVel[0], carVel[1], carVel[2]);
 

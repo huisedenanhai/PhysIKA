@@ -6,6 +6,7 @@
 #include "SSEUtil.h"
 #include "Core/Utility/Reduction.h"
 #include "Core/Utility/cuda_utilities.h"
+#include <ctime>
 //#include <cooperative_groups.h>
 //using namespace cooperative_groups;
 
@@ -62,9 +63,15 @@ bool SSESandSolver::initialize()
 
 bool SSESandSolver::stepSimulation(float deltime)
 {
+
+
+	clock_t start, end;
+
+	start = clock();
+
     do
     {
-        double subdt = this->getMaxTimeStep();
+		double subdt = 0.001;//this->getMaxTimeStep();
         subdt        = subdt < deltime ? subdt : deltime;
         deltime -= subdt;
         printf("  Cur time step:  %f\n", subdt);
@@ -72,11 +79,13 @@ bool SSESandSolver::stepSimulation(float deltime)
         this->advection(subdt);
 
         this->updateVeclocity(subdt);
-
+		break;
     } while (deltime > 0);
 
     m_sandData.updateSandGridHeight();
 
+	end = clock();
+	std::cout << "sand solver time = " << (end - start) / 1000.0f << std::endl;
     //this->updateSandStaticHeight(deltime);
 
     return true;
@@ -149,6 +158,9 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
 
 void SSESandSolver::advection(float deltime)
 {
+	clock_t start, end;
+	start = clock();
+
     dim3 gridDims, blockDims;
     int  in_Nx = m_SandInfo.nx, in_Ny = m_SandInfo.ny;
     make_dimension2D(in_Nx, in_Ny, m_threadBlockx, m_threadBlocky, gridDims, blockDims);
@@ -160,6 +172,8 @@ void SSESandSolver::advection(float deltime)
     // cudaThreadSynchronize();
     cuSynchronize();
 
+	end = clock();
+	printf("ssesolver=%f", double(end - start) / 1000);
     // bind texture
     //SSEUtil::bindTexture2D(texture_grid, m_SandInfo.data, m_SandInfo.nx, m_SandInfo.ny, m_SandInfo.pitch);
     //cuSynchronize();

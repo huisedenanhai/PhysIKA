@@ -194,10 +194,11 @@ bool PBDSandSolver::forwardSubStep(float dt)
     //Function1Pt::copy(hostheight, m_staticHeight);
 
     //hostheight.Release();
-
+	clock_t start, end;
+	start = clock();
     int bdim = 512;
     int gdim = (position.size() + bdim - 1) / bdim;
-    PBD_integrateParticleForce<<<gdim, bdim>>>(
+    PBD_integrateParticleForce<<<gdim, bdim>>>(//核函数，global定义在53行，这里调用，提前设置<<<>>>.
         m_particleVel,
         position,
         m_particleMass,
@@ -216,6 +217,11 @@ bool PBDSandSolver::forwardSubStep(float dt)
         m_flowingLayerHeight);
     cuSynchronize();
 
+	end = clock();
+
+	printf("PBDSandsolver time=", double(end - start) / 1000);
+
+	start = clock();
     // Integrate velocity.
     cuExecute(position.size(), PBD_integrateVelocity, position, m_particleVel, m_particleType, dt);
 
@@ -224,7 +230,9 @@ bool PBDSandSolver::forwardSubStep(float dt)
     this->_updateRawParticleRho();
     if (m_need3DPos)
         this->_updateParticlePos3D();
+	end = clock();
 
+	printf("PBDSandsolver time2=", double(end - start) / 1000);
     return true;
 }
 
@@ -240,7 +248,7 @@ bool PBDSandSolver::velocityUpdate(float dt)
 
     int bdim = 512;
     int gdim = (m_particlePos.size() + bdim - 1) / bdim;
-    PBD_integrateParticleForce<<<gdim, bdim>>>(
+    PBD_integrateParticleForce<<<gdim, bdim>>>(//核函数，
         m_particleVel,
         m_particlePos,
         m_particleMass,
@@ -392,20 +400,27 @@ bool PBDSandSolver::initialize()
 
 bool PBDSandSolver::stepSimulation(float dt)
 {
+	clock_t start, end;
 
     //m_subStepNum = 2;
     double subdt = dt / ( double )m_subStepNum;
 
     int val = -0.5;
 
-    this->_doNeighborDetection();
+	start = clock();
 
+    this->_doNeighborDetection();
+	end = clock();
+	std::cout << "PBD neighbor time: " << double(end - start) / 1000.0f << std::endl;
+
+	start = clock();
     // Step simulation.
     for (int stepi = 0; stepi < m_subStepNum; ++stepi)
     {
         this->forwardSubStep(subdt);
     }
-
+	end = clock();
+	std::cout << "PBD solver time: " << double(end - start) / 1000.0f << std::endl;
     //this->_generateAndEliminateParticle(dt);
 
     //this->_updateStaticHeightChange(dt);
