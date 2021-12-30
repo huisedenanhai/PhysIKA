@@ -45,7 +45,7 @@ void                connector_use_demo::createScene()
     {
         for (int j = 0; j < 256; j++)
         {
-            data[i * 256 + j] = abs(i - 128) * 0.01f;
+			data[i * 256 + j] = 0.1;//abs(i - 128) * 0.01f;
         }
     }
 
@@ -61,10 +61,12 @@ void                connector_use_demo::createScene()
     info.height_resolution_x     = 256;
     info.height_resolution_y     = 256;
 
+	//info.sand_solver_algorithm = VPE::SandSolverAlgorithm::Particle;
+
     VPE::PhysIKACarCreateInfo carobject;
     info.cars.push_back(carobject);
     info.cars[0].car_position.x = 0;
-    info.cars[0].car_position.y = 1;
+    info.cars[0].car_position.y = 0.5;
     info.cars[0].car_position.z = 0;
 
     info.cars[0].chassis.translation.x = 0;
@@ -97,9 +99,21 @@ void                connector_use_demo::createScene()
     VPE::PhysIKARigidBodyCreateInfo rb_info{};
     rb_info.mass       = 1.0f;
     rb_info.scale      = 0.15f;
-    rb_info.shape_path = "../../Media/standard/standard_cube.obj";
+	rb_info.shape_path = "../../Media/standard/standard_cube.obj";
     rb_info.sdf_path   = "../../Media/standard/standard_cube.sdf";
+    /*rb_info.shape_path = "../../Media/standard/standard_sphere.obj";
+    rb_info.sdf_path   = "../../Media/standard/standard_sphere.sdf";*/
     info.rigidbodies.push_back(rb_info);
+
+
+	/*VPE::PhysIKARigidBodyCreateInfo sp_info{};
+    sp_info.mass       = 1.0f;
+    sp_info.scale      = 0.15f;
+    sp_info.shape_path = "../../Media/standard/standard_sphere.obj";
+    sp_info.sdf_path   = "../../Media/standard/standard_sphere.sdf";
+    info.rigidbodies.push_back(sp_info);*/
+
+
 
     SceneGraph& scene = SceneGraph::getInstance();
     scene.setUpperBound(Vector3f(2, 10, 2));
@@ -107,18 +121,78 @@ void                connector_use_demo::createScene()
     m_region = VPE::SandSimulationRegion::Create(info);
     m_car    = m_region->GetCar(0);
     auto rb  = m_region->GetRigidBody(0);
-    rb->SetGlobalPositionRotation({ 1, 1, 2 }, { 0, 0, 0, 1 });
+    rb->SetGlobalPositionRotation({ 0, 0.75, 0 }, { 0, 0, 0, 1 });//1,1,2
+	
+
 
     class UpdateNode : public Node
     {
     public:
         std::shared_ptr<VPE::PhysIKACar>       car;
         std::shared_ptr<VPE::PhysIKARigidBody> rigidbody;
+		
         float                                  total_time{};
 
+
         void advance(float dt) override
-        {
-            VPE::Vec3 last_pos{};
+        {//还是崩，可能扎到地就会导致速度过大，就会蹦。break swe suppose.
+			////小车为啥往下掉？因为是车自带重力和suspensionStrength力
+			////还是崩，可能不能搞这个去掉刚体这一套。就搞原始的那一套
+			//容易崩，应该是算法本身的问题。不崩的调试方向：1.速度不能太大2.刚体进入沙子不能太深，如果直接扎进去或用cube，大概率崩。要用球或圆柱。
+			//VPE::Vec3 last_pos{};
+			//VPE::Quat last_quat{};
+			////VPE::Vec3 last_pos2{};
+			//VPE::Quat last_quat2{};
+
+   //         auto      chassis = car->GetChassisRigidBody();
+   //         chassis->GetGlobalPositionRotation(last_pos, last_quat);
+			////rigidbody->GetGlobalPositionRotation(last_pos2, last_quat2);
+   //         auto print_rb_xform = [](const char* name, auto rb) {
+   //             VPE::Vec3 pos{};
+   //             VPE::Quat quat{};
+   //             rb->GetGlobalPositionRotation(pos, quat);
+   //             printf("%s Pos { %f, %f, %f }, %s Quat { %f, %f, %f, %f }",
+   //                    name,
+   //                    pos.x,
+   //                    pos.y,
+   //                    pos.z,
+   //                    name,
+   //                    quat.x,
+   //                    quat.y,
+   //                    quat.z,
+   //                    quat.w);
+   //         };
+			//printf("chassis P&Q: Pos { %f, %f, %f },  Quat { %f, %f, %f, %f }",
+   //                    
+			//	last_pos.x,
+			//	last_pos.y,
+			//	last_pos.z,
+   //                    
+			//	last_quat.x,
+			//	last_quat.y,
+			//	last_quat.z,
+			//	last_quat.w);
+
+   //         print_rb_xform("Chassis", chassis);
+   //         print_rb_xform("Cube", rigidbody);
+
+   //         total_time += dt;
+			//cout<<total_time<<"\n";
+			//if (last_pos.y < 0.75) {
+			//	last_pos.y += 10*dt;
+			//	
+			//}
+			////last_pos2.z= last_pos2.z + std::sin(total_time)/500;
+   //         chassis->SetGlobalPositionRotation(last_pos, last_quat);
+			////rigidbody->SetGlobalPositionRotation(last_pos2, last_quat2);
+
+   //         //rigidbody->SetGlobalPositionRotation(
+   //             ////{ 0.5/*std::cos(total_time * 0.0000000001f* 0.0000000001f)*/, 0.5, 0.5/*std::sin(total_time * 0.001f)*/ },//old is *10
+   //             ////{ 0, 0, 0, 0 }
+			////	last_pos, last_quat
+			////);//改成这样方块还在动，
+			
+			VPE::Vec3 last_pos{};
             VPE::Quat last_quat{};
             auto      chassis = car->GetChassisRigidBody();
             chassis->GetGlobalPositionRotation(last_pos, last_quat);
@@ -140,14 +214,18 @@ void                connector_use_demo::createScene()
 
             print_rb_xform("Chassis", chassis);
             print_rb_xform("Cube", rigidbody);
+			
+
 
             total_time += dt;
-            last_pos.y = 1.0 + std::sin(total_time);
+            last_pos.y -= 10 * dt;
             chassis->SetGlobalPositionRotation(last_pos, last_quat);
 
             rigidbody->SetGlobalPositionRotation(
-                { std::cos(total_time * 10.0f), 0.5, std::sin(total_time * 10.0f) },
+			
+                { std::cos(total_time * 10.0f), /*0.25+*/std::cos(total_time * 10.0f)-0.25f, /*std::sin(total_time * 10.0f)*/0 },
                 { 0, 0, 0, 1 });
+			
         }
     };
 

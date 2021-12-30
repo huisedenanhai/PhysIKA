@@ -173,7 +173,7 @@ void SSESandSolver::advection(float deltime)
     cuSynchronize();
 
 	end = clock();
-	printf("ssesolver=%f", double(end - start) / 1000);
+	//printf("ssesolver=%f", double(end - start) / 1000);
     // bind texture
     //SSEUtil::bindTexture2D(texture_grid, m_SandInfo.data, m_SandInfo.nx, m_SandInfo.ny, m_SandInfo.pitch);
     //cuSynchronize();

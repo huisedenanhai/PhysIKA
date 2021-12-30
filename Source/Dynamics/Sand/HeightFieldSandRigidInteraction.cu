@@ -129,6 +129,58 @@ void HeightFieldSandRigidInteraction::advance(Real dt)
     printf("Elapsed time:  %lf,  Average time: %lf\n", elapTime, avgTime);
 }
 
+void HeightFieldSandRigidInteraction::advect_new(Real dt)
+{
+
+	CTimer timer;
+	timer.start();
+	auto m_sandSolver = getSandSolver();
+	auto m_interactSolver = getInteractionSolver();
+	auto m_totalFrame = getTotalFrame();
+	auto m_totalTime = getTotalTime();
+	auto m_rigidSolver = getRigidSolver();
+	// Advect sand.
+	if (m_sandSolver)
+	{
+		m_sandSolver->advection(dt);
+		m_sandSolver->updateSandGridHeight();
+	}
+
+	if (m_rigidSolver && m_sandSolver)
+	{
+		m_interactSolver->setPreBodyInfo();
+		m_rigidSolver->updateRigidToGPUBody();
+	}
+
+	if (m_rigidSolver && m_sandSolver)
+	{
+		_updateSandHeightField();//无法解析的外部符号
+		m_interactSolver->updateBodyAverageVel(dt);
+		int nrigid = m_rigidSolver->getRigidBodys().size();
+		for (int i = 0; i < nrigid; ++i)
+		{
+			//if (m_interactSolver->collisionValid(m_rigidSolver->getRigidBodys()[i]))
+			{
+				//设置一下每个刚体的碰撞过滤！
+
+				// Update info.
+				_updateGridParticleInfo(i);//无法解析的外部符号//注释掉沙子就不动了
+
+				// Solve interaction force.
+				m_interactSolver->computeSingleBody(i, dt);//注释掉沙子就不动了
+
+				// Solver sand density constraint.
+				m_sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);//注释掉沙子就不动了
+			}
+		}
+	}
+
+	if (m_sandSolver)
+	{
+		m_sandSolver->updateVeclocity(dt);//有了它，效果上有点区别
+	}
+}
+
 void HeightFieldSandRigidInteraction::advectSubStep(Real dt)
 {
 

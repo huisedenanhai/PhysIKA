@@ -31,7 +31,19 @@ public:
 
     void advectSubStep(Real dt);
 
+	void advect_new(Real dt);
+
     void setSandGrid(DeviceHeightField1d& sandHeight, DeviceHeightField1d& landHeight);
+
+	void _setRigidForceAsGravity();
+	void _setRigidForceEmpty();
+
+	void _updateSandHeightField();
+
+	void _updateGridParticleInfo(int i);
+
+	void _computeBoundingGrid(int& minGx, int& minGz, int& maxGx, int& maxGz, float radius, const Vector3f& center);
+
 
     std::shared_ptr<SSESandSolver> getSandSolver() const
     {
@@ -56,6 +68,16 @@ public:
         return m_interactSolver;
     }
 
+	int getTotalFrame()//wkm new
+	{
+		return m_totalFrame;
+	}
+
+	double getTotalTime()//wkm new
+	{
+		return m_totalTime;
+	}
+
     //std::shared_ptr<HeightFieldDensitySolver> getDensitySolver()const { return m_densitySolver; }
 
     void detectLandRigidContacts(PBDSolver*, Real);
@@ -73,16 +95,8 @@ public:
 
     DEF_EMPTY_VAR(CVertical, double, "Horizontal Velocity Coupling Paremeter");
 
-private:
-    void _setRigidForceAsGravity();
-    void _setRigidForceEmpty();
-
-    void _updateSandHeightField();
-
-    void _updateGridParticleInfo(int i);
-
-    void _computeBoundingGrid(int& minGx, int& minGz, int& maxGx, int& maxGz, float radius, const Vector3f& center);
-
+public:
+   
 public:
     int m_subStep      = 1;
     int m_subRigidStep = 20;
@@ -91,7 +105,9 @@ public:
 
     int m_boundingBlockMargin = 3;
 
-private:
+//private:
+//protected:
+public:
     std::shared_ptr<SSESandSolver> m_sandSolver;
 
     std::shared_ptr<PBDSolver> m_rigidSolver;
@@ -120,6 +136,9 @@ private:
     double m_totalTime  = 0.0;
     int    m_totalFrame = 0;
 };
+
+
+
 }  // namespace PhysIKA
 
 #endif  // HEIGHTFIELDSANDRIGIDINTERACTION_H

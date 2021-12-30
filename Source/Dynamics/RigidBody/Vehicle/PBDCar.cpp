@@ -16,6 +16,7 @@ namespace PhysIKA {
 bool PBDCar::build()
 {
     // *** Rigid chassis.
+	//why in heightfield tent to break up?
     m_chassis = std::make_shared<RigidBody2<DataType3f>>("Chassis");
     this->addChild(m_chassis);
 
@@ -177,9 +178,9 @@ void PBDCar::advance(Real dt)
     //_updateWheelRotation(dt);
 
     //this->updateForce(dt);
-	clock_t start, end;
 
-	start = clock();
+	//clock_t start, end;
+	//start = clock();
     if (!m_accPressed)
     {
         forwardForce = 0;
@@ -190,8 +191,16 @@ void PBDCar::advance(Real dt)
     this->_doVelConstraint(dt);
     this->m_rigidSolver->setBodyDirty();
 
-	end = clock();
-	std::cout << "car time = " << (end - start) / 1000.0f << std::endl;
+	Vector3f a=m_chassis->getLinearVelocity();
+	for(int i=0;i<3;i++){
+	if(a[i]>2)a[i]=2;
+	}
+	m_chassis->setLinearVelocity(a * 0.99);
+
+	
+
+	//end = clock();
+	//std::cout << "car time = " << (end - start) / 1000.0f << std::endl;
 
     //Vector3f carVel = m_chassis->getLinearVelocity();
     //printf("Car Vel:  %lf %lf %lf \n", carVel[0], carVel[1], carVel[2]);
@@ -202,8 +211,11 @@ void PBDCar::advance(Real dt)
 void PBDCar::forward(Real dt)
 {
     forwardDir = this->_getForwardDir();
-    forwardForce += forwardForceAcc * (dt >= 0 ? 1 : -1);
 
+	if (forwardForce<3000){
+    forwardForce += forwardForceAcc * (dt >= 0 ? 1 : -1);
+	}
+	std::cout <<"forwardForce="<< forwardForce << "/n";
     //Vector3f force = forwardForce * forwardDir;
     //Vector3f torque = m_chassis->getGlobalQ().rotate(forwardForcePoint).cross(force);
     //m_chassis->addExternalForce(force);
@@ -269,6 +281,14 @@ Vector3f PBDCar::_getUpDir()
     return m_chassis->getGlobalQ().rotate(wheelupDirection);
 }
 
+void PBDCar::_setAllZero(Real dt)
+{
+	suspensionStrength = 0;
+	m_gravity = { 0, 0, 0 };
+	maxVel = 0;
+	_doVelConstraint(dt);
+}
+
 void PBDCar::_setRigidForceAsGravity()
 {
     m_chassis->setExternalForce(m_gravity * chassisMass);
@@ -284,7 +304,7 @@ void PBDCar::_setRigidForceAsGravity()
     }
 }
 
-void PBDCar::_doVelConstraint(Real dt)
+void PBDCar::_doVelConstraint(Real dt)//use this func can avoid vel too big cause bengkui 
 {
     double linDamp = pow(1.0 - linearDamping, dt);
     double angDamp = pow(1.0 - angularDamping, dt);

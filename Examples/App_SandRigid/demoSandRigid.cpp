@@ -883,11 +883,11 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     sandinfo.nx               = 64 * 4;
     sandinfo.ny               = 64 * 4;
     sandinfo.griddl           = 0.03;
-    sandinfo.mu               = 0.7;
+    sandinfo.mu               = 0.7;//0.7
     sandinfo.drag             = 0.95;
     sandinfo.slide            = 10 * sandinfo.griddl;
     sandinfo.sandRho          = 1000.0;
-    double sandParticleHeight = 0.1;
+    double sandParticleHeight = 0.1;//0.1
 
     SceneGraph& scene = SceneGraph::getInstance();
     scene.setUpperBound(Vector3f(10, 10, 10));//100
@@ -924,7 +924,7 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     std::vector<float> surfaceHeight(sandinfo.nx * sandinfo.ny);
     std::vector<int>   humpBlock = { 0, 20 + 0, 5, 25 + 0 };
     //fillGrid2D(&(landHeight[0]), sandinfo.nx, sandinfo.ny, 0.0f);
-    fillGrid2D(&(surfaceHeight[0]), sandinfo.nx, sandinfo.ny, 0.25f);
+    fillGrid2D(&(surfaceHeight[0]), sandinfo.nx, sandinfo.ny, 0.25f);//load sand surface data
     //fillGrid2D(&(surfaceHeight[0]), sandinfo.nx, sandinfo.ny, humpBlock, 0.5f);
 
     HostHeightField1d hosthf;
@@ -947,7 +947,7 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
             double curh = 0.5 * maxh - hosthf(i, j);
             if (curh < 0.2)
                 curh = 0.2;
-            landHeight[i * sandinfo.ny + j] = curh;
+            landHeight[i * sandinfo.ny + j] = curh;//load height field data
         }
     }
     sandGrid.initialize(&(landHeight[0]), &(surfaceHeight[0]));
@@ -1106,7 +1106,7 @@ void                                DemoHeightFieldSandLandMultiRigid2::createSc
     m_car->steeringLowerBound = -0.5;
     m_car->steeringUpperBound = 0.5;
 
-    m_car->forwardForceAcc = 10000;
+    m_car->forwardForceAcc = 20000;
     //m_car->breakForceAcc ;
     m_car->steeringSpeed = 1.0;
     m_car->maxVel        = 2.5;

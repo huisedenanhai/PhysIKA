@@ -43,6 +43,7 @@ public:
 
         Log::sendMessage(Log::Info, "Simulation end!");
     }
+	
     //下面是键盘操作，是个静态函数
     static void demoKeyboardFunction(unsigned char key, int x, int y)
     {

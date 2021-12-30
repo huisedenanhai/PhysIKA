@@ -22,9 +22,11 @@
 #include "Dynamics/HeightField/HeightFieldMesh.h"
 #include "IO/Surface_Mesh_IO/ObjFileLoader.h"
 #include "Dynamics\Sand\ParticleSandRigidInteraction.h"
+#include "Dynamics/Sand/HeightFieldSandRigidInteraction.h"
 #include "Dynamics/Sand/SandVisualPointSampleModule.h"
 #include "IO/Image_IO/HeightFieldLoader.h"
 #include "GUI/GlutGUI/GLApp.h"
+#include "sandRigidCommon.h"
 
 #include "math.h"
 
@@ -100,7 +102,7 @@ bool ComputeBoundingBox(PhysIKA::Vector3f& center, PhysIKA::Vector3f& boxsize, c
     return true;
 }
 
-// The sand simulation region without PBD rigid body solver
+// The particle sand simulation region without PBD rigid body solver
 class SandSolverNode : public ParticleSandRigidInteraction
 {
 public:
@@ -179,6 +181,24 @@ public:
             sandSolver->infoUpdate(dt);
         }
     }
+};
+
+// The Heightfield sand simulation region without PBD rigid body solver
+// To debug
+class HeightFieldSandSolverNode : public HeightFieldSandRigidInteraction
+{
+public:
+	void advance(Real dt) override
+	{
+		//advectSubStep(0.001);
+		//HeightFieldSandRigidInteraction::advance(dt);
+
+		//_setRigidForceAsGravity();
+		advect_new(dt);//cy:write a new func in HeightFieldSandRigidInteraction,and use it here, to solve the problem of part  of func wufajiexi
+	
+		//new bug vel is too big, so should set a top.
+	}
+	
 };
 
 class DummyPBDSolverNode : public PBDSolverNode
@@ -295,7 +315,7 @@ public:
         particle_num = rho_d.size();
         return reinterpret_cast<double*>(rho_d.begin());
     }
-
+	//TODO
     void Init(const SandSimulationRegionCreateInfo& info);
 
     void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
@@ -313,12 +333,125 @@ public:
     }
 };
 
+struct HeightFieldSandSimulationRegion : public SandSimulationRegion 
+{
+public:
+	std::shared_ptr<PhysIKA::Node>         node;
+	float                                  _sand_layer_thickness;
+	float                                  _delta;
+	double                                 _total_width_in_meter;  //setHeight
+	double                                 _total_height_in_meter;
+	float                                  chassisMass = 1.0;  //need corrected
+	int                                    newcarnumber = 0;
+	std::vector<VPE::PhysIKACarCreateInfo> car_cache;
+
+	//bianliang of create function
+	std::shared_ptr<HeightFieldSandRigidInteraction>             root;
+	std::shared_ptr<PhysIKA::PBDSolverNode>                   rigidSim;
+	std::vector<shared_ptr<PhysIKA::PBDCar>>                  m_car;
+	std::vector<shared_ptr<VPE::PhysIKACar>>                  m_PhysIKACar;  //
+	std::shared_ptr<PhysIKA::SandInteractionForceSolver>      interactionSolver;
+	std::shared_ptr<PhysIKA::RigidBody2<PhysIKA::DataType3f>> m_chassis;
+	std::string                                               chassisFile = "";
+	PhysIKA::Vector3f                                         chassisInertia;
+	PhysIKA::Vector3f                                         carPosition;
+	PhysIKA::Quaternion<float>                                carRotation;
+	std::vector<PhysIKA::RigidBody2_ptr>                      m_rigids;
+	std::vector<std::shared_ptr<PhysIKARigidBody>>            m_rigidbody_wrappers{};
+
+	std::shared_ptr<PhysIKA::PBDSandSolver>                   psandSolver;
+
+	std::vector<float> landHeight;
+	std::vector<float> surfaceHeight;
+
+	
+	HeightFieldLoader hfloader;
+
+
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+	std::vector<std::shared_ptr<PhysIKA::RigidMeshRender>> m_rigidRenders;
+#endif
+
+	PhysIKA::SandGridInfo               sandinfo;
+	//PhysIKA::HostHeightField1d          landHeight;
+	std::shared_ptr<PhysIKA::PBDSolver> rigidSolver;
+
+	std::shared_ptr<PhysIKA::Node> GetRoot() override  //rootParticleSandRigidInteraction
+	{
+		return root;
+	}
+
+	std::shared_ptr<VPE::PhysIKACar> GetCar(uint64_t car_handle) override  //car_handle
+	{
+		if (car_handle < newcarnumber)
+		{
+			return m_PhysIKACar[car_handle];
+		}
+		return nullptr;
+	}
+
+	std::vector<VPE::Vec3> GetSandParticles() override  ////VPE::Vec3*
+	{
+		auto&                          pos_d = psandSolver->getParticlePosition3D();
+		auto                           particle_num = pos_d.size();
+		std::vector<PhysIKA::Vector3d> positions{};
+		positions.resize(particle_num);
+		cudaMemcpy(positions.data(), pos_d.begin(), sizeof(PhysIKA::Vector3d) * particle_num, cudaMemcpyDeviceToHost);
+		std::vector<VPE::Vec3> result{};
+		result.reserve(particle_num);
+		for (const auto& p : positions)
+		{
+			result.push_back(
+				VPE::Vec3{ static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2]) });
+		}
+
+		return result;
+	}
+
+	double* GetSandParticlesDevicePtr(size_t& particle_num) override
+	{
+		auto& pos_d = psandSolver->getParticlePosition3D();
+		particle_num = pos_d.size();
+		return reinterpret_cast<double*>(pos_d.begin());
+	}
+
+	double* GetSandParticlesRhoDevicePtr(size_t& particle_num) override
+	{
+		auto& rho_d = psandSolver->getParticleRho2D();
+		particle_num = rho_d.size();
+		return reinterpret_cast<double*>(rho_d.begin());
+	}
+	//TODO
+	void Init(const SandSimulationRegionCreateInfo& info);
+
+	void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
+	{
+		PhysIKA::DistanceField3D<PhysIKA::DataType3f> sdf;
+		sdf.loadSDF(sdf_file);
+		sdf.scale(1.0f);
+		sdf.translate(ToPhysIKA(translate));
+		interactionSolver->addSDF(sdf, rigid_id);
+	}
+
+	std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index)
+	{
+		return m_rigidbody_wrappers[rb_index];
+	}
+	
+
+};
+
 std::shared_ptr<SandSimulationRegion> SandSimulationRegion::Create(const SandSimulationRegionCreateInfo& info)
 {
     switch (info.sand_solver_algorithm)
     {
-        case SandSolverAlgorithm::HeightField:
-            // TODO Height Field Sand Sim Region
+        case SandSolverAlgorithm::HeightField:{
+            // TODO Height Field Sand Sim Region, write a new struct,espacilly init.
+			auto region = std::make_shared<HeightFieldSandSimulationRegion>();
+			region->Init(info);
+			return region;
+		}
         case SandSolverAlgorithm::Particle: {
 
             auto region = std::make_shared<ParticleSandSimulationRegion>();
@@ -733,6 +866,311 @@ inline void ParticleSandSimulationRegion::Init(const SandSimulationRegionCreateI
 
     interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
 }
+//TODO
+inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCreateInfo& info)  //info
+{
+	//build
+	sandinfo.nx = info.height_resolution_x;
+	sandinfo.ny = info.height_resolution_y;
+	sandinfo.griddl = info.grid_physical_size;
+	sandinfo.mu = 0.7;
+	sandinfo.drag = 0.95;
+	sandinfo.slide = 10 * sandinfo.griddl;
+	sandinfo.sandRho = 1000.0;
+	double sandParticleHeight = 0.1;
+
+	landHeight.resize(sandinfo.nx*sandinfo.ny);//land
+	surfaceHeight.resize(sandinfo.nx*sandinfo.ny);//sand surface 
+	/*landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);
+	landHeight.setOrigin(info.center.x, info.center.y, info.center.z);*/
+
+	for (int j = 0; j < sandinfo.ny; ++j)//load land height field
+	{
+		for (int i = 0; i < sandinfo.nx; ++i)
+		{
+			double aa = info.height_data[j * sandinfo.nx + i];
+			landHeight[j * sandinfo.nx + i] = aa;
+		}
+	}
+	//fill这个函数只能铺一层
+	//fillGrid2D(&(surfaceHeight[0]), sandinfo.nx, sandinfo.ny, 0.25f);//load sand surface data
+
+	//可以不用这个函数，从common里面复制过来放在这为沙高赋值。
+	for (int j = 0; j < sandinfo.ny; ++j)//load land height field
+	{
+		for (int i = 0; i < sandinfo.nx; ++i)
+		{
+			double aa = info.height_data[j * sandinfo.nx + i];
+			surfaceHeight[j * sandinfo.nx + i] = aa+0.05f;//thick=0.05
+		}
+	}
+
+
+
+	car_cache = info.cars;
+
+	// 1 Root node. Also the simulator.
+	if (info.enable_rigid_simulation)
+	{
+		root = std::make_shared<HeightFieldSandRigidInteraction>();
+	}
+	else
+	{
+		root = std::make_shared<HeightFieldSandSolverNode>();//todo new a new class
+	}
+
+	root->setActive(true);
+	root->setDt(info.time_delta);
+
+	root->varBouyancyFactor()->setValue(50);
+	root->varDragFactor()->setValue(1.0);
+	root->varCHorizontal()->setValue(1.);
+	root->varCVertical()->setValue(2.);
+	//root->varCprobability()->setValue(100);
+
+	std::shared_ptr<SandSimulator> sandSim = std::make_shared<SandSimulator>();
+	std::shared_ptr<SSESandSolver> psandSolver = std::make_shared<SSESandSolver>();
+	//m_psandsolver                              = psandSolver;
+	psandSolver->setCFLNumber(0.5);//0.3 need adapting
+	sandSim->needForward(true);//false
+	sandSim->setSandSolver(psandSolver);
+	root->setSandSolver(psandSolver);
+	root->addChild(sandSim);
+
+	// Initialize sand grid data.
+	SandGrid& sandGrid = psandSolver->getSandGrid();
+	sandGrid.setSandInfo(sandinfo);
+	root->setSandGrid(sandGrid.m_sandHeight, sandGrid.m_landHeight);
+
+	sandGrid.initialize(&(landHeight[0]), &(surfaceHeight[0]));
+	
+
+	// 4 Land mesh.
+	{
+		auto landrigid = std::make_shared<PhysIKA::RigidBody2<PhysIKA::DataType3f>>("Land");
+		root->addChild(landrigid);
+
+		// Mesh triangles.
+		auto triset = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
+		landrigid->setTopologyModule(triset);
+
+		// Generate mesh.
+		auto&                    hfland = sandGrid.m_landHeight;
+		PhysIKA::HeightFieldMesh hfmesh;
+		hfmesh.generate(triset, hfland);
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+		// Mesh renderer.
+		auto renderModule = std::make_shared<PhysIKA::RigidMeshRender>(landrigid->getTransformationFrame());
+		renderModule->setColor(PhysIKA::Vector3f(210.0 / 255.0, 180.0 / 255.0, 140.0 / 255.0));
+		landrigid->addVisualModule(renderModule);
+#endif
+	}
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+	// 10 Rendering module of simulator.
+	auto pRenderModule = std::make_shared<PhysIKA::PointRenderModule>();
+	pRenderModule->setSphereInstaceSize(sandinfo.griddl * 0.5);
+	pRenderModule->setColor(PhysIKA::Vector3f(1.0f, 1.0f, 122.0f / 255.0f));
+	sandSim->addVisualModule(pRenderModule);
+#endif
+
+	// 11 topology
+	auto topology = std::make_shared<PhysIKA::PointSet<PhysIKA::DataType3f>>();
+	sandSim->setTopologyModule(topology);
+	topology->getPoints().resize(1);
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+	// 12 Render point sampler (module).
+	auto psampler = std::make_shared<PhysIKA::SandHeightRenderParticleSampler>();
+	psampler->m_sandHeight = &sandGrid.m_sandHeight;
+	psampler->m_landHeight = &sandGrid.m_landHeight;
+	psampler->Initalize(sandinfo.nx, sandinfo.ny, 3, 2, sandinfo.griddl);
+	sandSim->addCustomModule(psampler);
+#endif
+
+	/// ------  Rigid ------------
+	//13 PBD simulation
+	if (info.enable_rigid_simulation)
+	{
+		rigidSim = std::make_shared<PhysIKA::PBDSolverNode>();
+	}
+	else
+	{
+		rigidSim = std::make_shared<DummyPBDSolverNode>();
+	}
+	rigidSim->getSolver()->setUseGPU(true);
+	rigidSim->needForward(false);
+	rigidSolver = rigidSim->getSolver();
+
+	root->setRigidSolver(rigidSolver);
+	root->addChild(rigidSim);
+
+	//--------------------------------------------------------------------
+	// Car.14
+
+	interactionSolver = root->getInteractionSolver();  //ParticleSandRigidInteraction
+
+	//16 m_car
+	newcarnumber = car_cache.size();
+	for (int u = 0; u < newcarnumber; u++)
+	{
+		double            scale1d = 1.;
+		PhysIKA::Vector3d scale3d(scale1d, scale1d, scale1d);  //
+		PhysIKA::Vector3f scale3f(scale1d, scale1d, scale1d);  //(1,1,1)//
+
+		PhysIKA::Vector3f chassisCenter;  //000
+		PhysIKA::Vector3f wheelCenter[4];
+		PhysIKA::Vector3f chassisSize;
+		PhysIKA::Vector3f wheelSize[4];
+
+		std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> chassisTri;  //
+		std::shared_ptr<PhysIKA::TriangleSet<PhysIKA::DataType3f>> wheelTri[4];
+
+		// Load car mesh.15SDF
+		{
+			// Chassis mesh.
+			PhysIKA::ObjFileLoader chassisLoader(car_cache[u].chassis.model_path);
+			chassisTri = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
+			chassisTri->setPoints(chassisLoader.getVertexList());
+			chassisTri->setTriangles(chassisLoader.getFaceList());
+			ComputeBoundingBox(chassisCenter, chassisSize, chassisLoader.getVertexList());
+
+			chassisTri->scale(scale3f);
+			chassisTri->translate(-chassisCenter);
+
+			for (int i = 0; i < 4; ++i)  //
+			{
+				string objfile(car_cache[u].wheels[i].model_path);
+
+				// Wheel mesh.
+				PhysIKA::ObjFileLoader wheelLoader(objfile);
+				wheelTri[i] = std::make_shared<PhysIKA::TriangleSet<PhysIKA::DataType3f>>();
+				wheelTri[i]->setPoints(wheelLoader.getVertexList());
+				wheelTri[i]->setTriangles(wheelLoader.getFaceList());
+				ComputeBoundingBox(wheelCenter[i], wheelSize[i], wheelLoader.getVertexList());
+				wheelTri[i]->scale(scale3f);
+				wheelTri[i]->translate(-wheelCenter[i]);
+			}
+		}
+		m_car.push_back(std::make_shared<PhysIKA::PBDCar>());
+
+		// TODO over
+		//newcarnumber
+		rigidSim->addChild(m_car[u]);
+		m_car[u]->m_rigidSolver = rigidSolver;
+
+		m_car[u]->carPosition = ToPhysIKA(car_cache[u].car_position) + chassisCenter;  //
+		for (int w = 0; w < 4; w++)
+		{
+			m_car[u]->wheelRelPosition[w] = ToPhysIKA(car_cache[u].wheels[w].translation) * scale1d + wheelCenter[w] - chassisCenter;
+			m_car[u]->wheelRelRotation[w] = ToPhysIKA(car_cache[u].wheels[w].rotation);
+		}
+
+		m_car[u]->wheelupDirection = PhysIKA::Vector3f(0, 0.25, 0);
+		m_car[u]->wheelRightDirection = PhysIKA::Vector3f(1, 0, 0);
+
+		m_car[u]->chassisMass = car_cache[u].car_mass;                                                              //
+		m_car[u]->chassisInertia = PhysIKA::RigidUtil::calculateCubeLocalInertia(m_car[u]->chassisMass, chassisSize);  //
+
+		float wheelm = car_cache[u].wheel_mass;  //50
+
+		PhysIKA::Vector3f wheelI = PhysIKA::RigidUtil::calculateCylinderLocalInertia(wheelm,  //
+			(wheelSize[0][1] + wheelSize[0][2]) / 2.0,
+			wheelSize[0][0],
+			0);
+		m_car[u]->wheelMass[0] = wheelm;
+		m_car[u]->wheelInertia[0] = wheelI;
+		m_car[u]->wheelMass[1] = wheelm;
+		m_car[u]->wheelInertia[1] = wheelI;
+		m_car[u]->wheelMass[2] = wheelm;
+		m_car[u]->wheelInertia[2] = wheelI;
+		m_car[u]->wheelMass[3] = wheelm;
+		m_car[u]->wheelInertia[3] = wheelI;
+
+		m_car[u]->steeringLowerBound = -0.5;
+		m_car[u]->steeringUpperBound = 0.5;
+
+		m_car[u]->forwardForceAcc = car_cache[u].forward_force;
+		m_car[u]->maxVel = car_cache[u].max_speed;
+
+		// Build
+		m_car[u]->build();
+
+		// Add visualization module and topology module.
+		m_car[u]->m_chassis->setTopologyModule(chassisTri);
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+		auto chassisRender = std::make_shared<PhysIKA::RigidMeshRender>(m_car[0]->m_chassis->getTransformationFrame());
+		chassisRender->setColor(PhysIKA::Vector3f(0.8, std::rand() % 1000 / (double)1000, 0.8));
+		m_rigidRenders.push_back(chassisRender);
+		m_car[u]->m_chassis->addVisualModule(chassisRender);
+#endif
+		AddSDF(car_cache[u].chassis.sdf_path, {}, m_car[u]->m_chassis->getId());
+
+		// Bounding radius of chassis.
+		float chassisRadius = chassisTri->computeBoundingRadius();
+		m_car[u]->m_chassis->setRadius(chassisRadius);
+
+		m_rigids.push_back(m_car[u]->m_chassis);
+
+		for (int i = 0; i < 4; ++i)  //
+		{
+			m_car[u]->m_wheels[i]->setTopologyModule(wheelTri[i]);
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+			auto renderModule = std::make_shared<PhysIKA::RigidMeshRender>(m_car[u]->m_wheels[i]->getTransformationFrame());
+			renderModule->setColor(PhysIKA::Vector3f(0.8, std::rand() % 1000 / (double)1000, 0.8));
+			m_car[u]->m_wheels[i]->addVisualModule(renderModule);
+			m_rigidRenders.push_back(renderModule);
+#endif
+			AddSDF(car_cache[u].wheels[i].sdf_path, {}, m_car[u]->m_wheels[i]->getId());
+
+			// Bounding radius of chassis.
+			float wheelRadius = wheelTri[i]->computeBoundingRadius();
+			m_car[u]->m_wheels[i]->setRadius(wheelRadius);
+
+			m_rigids.push_back(m_car[u]->m_wheels[i]);
+		}
+
+		// Wrapper accesses car->m_chassis, which is only valid after call to car->build()
+		m_PhysIKACar.push_back(CreatePhysIKACar(m_car.back()));
+	}
+
+	for (auto& rb_info : info.rigidbodies)
+	{
+		double   scale1d = rb_info.scale;
+		Vector3f scale(scale1d, scale1d, scale1d);
+		float    rigid_mass = rb_info.mass;
+
+		/// rigids body
+		auto prigid = std::make_shared<RigidBody2<DataType3f>>();
+		int  id = rigidSim->addRigid(prigid);
+		prigid->loadShape(rb_info.shape_path);
+
+		auto triset = TypeInfo::cast<TriangleSet<DataType3f>>(prigid->getTopologyModule());
+		triset->scale(scale);
+		// TODO local inertia of triangle mesh
+		Vector3f rigidI = RigidUtil::calculateSphereLocalInertia(rigid_mass, 1.0f);
+		prigid->setI(Inertia<float>(rigid_mass, rigidI));
+
+		DistanceField3D<DataType3f> sdf;
+		sdf.loadSDF(rb_info.sdf_path);
+		sdf.scale(scale1d);
+		interactionSolver->addSDF(sdf, id);
+
+		m_rigids.push_back(prigid);
+		m_rigidbody_wrappers.push_back(CreatePhysIKARigidBody(prigid));
+
+#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
+		auto renderModule = std::make_shared<RigidMeshRender>(prigid->getTransformationFrame());
+		renderModule->setColor(Vector3f(0.8, std::rand() % 1000 / (double)1000, 0.8));
+		prigid->addVisualModule(renderModule);
+		m_rigidRenders.push_back(renderModule);
+#endif
+	}
+
+	interactionSolver->m_prigids = &(rigidSolver->getRigidBodys());  //TODO m_prigids
+}
+
 
 PhysIKARigidBody::PhysIKARigidBody()
 {

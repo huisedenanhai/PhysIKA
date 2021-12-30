@@ -72,7 +72,7 @@ struct PhysIKACarCreateInfo
     float    linear_damping          = 0.2f;
     float    angular_damping         = 0.2f;
     uint32_t chassis_collision_group = 0;
-    uint32_t chassis_collision_mask  = {};
+    uint32_t chassis_collision_mask  = {};//碰撞过滤
     uint32_t wheel_collision_group   = 0;
     uint32_t wheel_collision_mask    = {};
 };
@@ -97,6 +97,9 @@ public:
     void SetLinearVelocity(const Vec3& v);
     Vec3 GetAngularVelocity();
     void SetAngularVelocity(const Vec3& w);
+
+	uint32_t collision_group = 0;
+    uint32_t collision_mask  = {};//wkm:负责碰撞过滤
 
     struct Impl;
     std::unique_ptr<Impl> _impl{};
@@ -147,6 +150,7 @@ struct SandSimulationRegionCreateInfo
     int                                     height_resolution_y;
     std::vector<VPE::PhysIKACarCreateInfo>  cars{};
     std::vector<PhysIKARigidBodyCreateInfo> rigidbodies{};
+
 };
 
 class SandSimulationRegion

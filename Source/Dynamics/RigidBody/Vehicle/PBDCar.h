@@ -41,6 +41,8 @@ public:
 
     void updateForce(Real dt);
 
+	void PBDCar::_setAllZero(Real dt);
+
 private:
     void _updateWheelRotation(Real dt);
 
@@ -109,13 +111,13 @@ public:
     //float breakForceAcc;
     float steeringSpeed;
 
-    float maxVel = 2.5;
+    float maxVel = 2.5;//old is 2.5,turn low,avoid break
 
     float linearDamping  = 0;
     float angularDamping = 0;
 
     float suspensionLength   = 0.05;
-    float suspensionStrength = 1000000;
+	float suspensionStrength =  1000000;
 
 private:
     Vector3f forwardForcePoint;

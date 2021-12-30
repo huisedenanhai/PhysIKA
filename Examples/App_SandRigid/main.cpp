@@ -20,11 +20,11 @@ using namespace PhysIKA;
 int main()
 {
     std::cout << "Input to choose a simulation scene: " << std::endl;
-    std::cout << "   0:  Car running on sand." << std::endl;
+    std::cout << "   0:  Car running on particle sand." << std::endl;
     std::cout << "   1:  Sand-rigid coupling." << std::endl;
-    std::cout << "   2:  HeightFieldtext-wei" << std::endl;
+    std::cout << "   2:  Car running on HeightField sand." << std::endl;
     std::cout << "   3:  Sand-Rigid Height Field" << std::endl;
-    std::cout << "   4:  两辆车" << std::endl;
+    std::cout << "   4:  two car on particle sand." << std::endl;
     std::cout << "   5:  connector" << std::endl;
     int caseid = 0;
     std::cin >> caseid;
@@ -43,7 +43,7 @@ int main()
             demo->run();
             break;
         }
-        case 2: {  //小车不稳，自动解体，问一下肖
+        case 2: {  //小车不稳，自动解体，问一下肖//现在唯一的问题就是车几乎动不了，猜测是牵引力太小，输出一下看看
             DemoHeightFieldSandLandMultiRigid2* demo = DemoHeightFieldSandLandMultiRigid2::getInstance();
 			/*clock_t start, end;
 			start = clock();*/
@@ -75,12 +75,14 @@ int main()
             break;
         }
 
-		case 6: {  //
+		case 6: {  //look steady,find reason.
 			DemoHeightFieldSandRigid_Sphere* demo = DemoHeightFieldSandRigid_Sphere::getInstance();
 			demo->createScene();
 			demo->run();
 			break;
 		}
+
+//+
 		case 7: {  //
 			DemoHeightFieldSandLandRigid* demo = DemoHeightFieldSandLandRigid::getInstance();
 			demo->createScene();
