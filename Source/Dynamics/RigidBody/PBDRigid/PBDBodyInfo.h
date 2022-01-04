@@ -88,8 +88,13 @@ public:
 
     COMM_FUNC void integrate(Real dt)
     {
+		Vector<Real, 3> lastVel = linVelocity;
+		
         prevPose = pose;
         linVelocity += externalForce * invMass * dt;
+		printf("velocity from integrate: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n", 
+			lastVel[0], lastVel[1], lastVel[2], 
+			linVelocity[0], linVelocity[1], linVelocity[2]);
 
         //if(invInertia[0]==0 || invInertia[1] != 0 && invInertia[1] != 0)
         Vector<Real, 3> angv = angVelocity;
@@ -114,8 +119,13 @@ public:
 
     COMM_FUNC void integrateForce(Real dt)
     {
-        linVelocity += externalForce * invMass * dt;
 
+		Vector<Real, 3> lastVel = linVelocity;
+		
+        linVelocity += externalForce * invMass * dt;
+		printf("velocity from integrate Force 123: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			lastVel[0], lastVel[1], lastVel[2],
+			linVelocity[0], linVelocity[1], linVelocity[2]);
         //if(invInertia[0]==0 || invInertia[1] != 0 && invInertia[1] != 0)
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -132,8 +142,13 @@ public:
 
     COMM_FUNC void integrateForce(const Vector<Real, 3>& extF, const Vector<Real, 3>& extT, Real dt)
     {
-        linVelocity += extF * invMass * dt;
 
+		Vector<Real, 3> lastVel = linVelocity;
+		
+        linVelocity += extF * invMass * dt;
+		printf("velocity from integrate Force 143: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			lastVel[0], lastVel[1], lastVel[2],
+			linVelocity[0], linVelocity[1], linVelocity[2]);
         //if(invInertia[0]==0 || invInertia[1] != 0 && invInertia[1] != 0)
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -152,8 +167,14 @@ public:
     {
 
         Vector<Real, 3> dlinv = extF * invMass * dt;
+
+		Vector<Real, 3> lastVel = linVelocity;
+		
         linVelocity += dlinv;
         pose.position += dlinv * dt;
+		printf("velocity from integrate FTVP: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			lastVel[0], lastVel[1], lastVel[2],
+			linVelocity[0], linVelocity[1], linVelocity[2]);
 
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -180,8 +201,13 @@ public:
     COMM_FUNC void updateVelocity(Real dt)
     {
         // update linear velocity.
-        linVelocity = (pose.position - prevPose.position) / dt;
 
+		Vector<Real, 3> lastVel = linVelocity;
+		
+        linVelocity = (pose.position - prevPose.position) / dt;
+		printf("velocity from update Velocity: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			lastVel[0], lastVel[1], lastVel[2],
+			linVelocity[0], linVelocity[1], linVelocity[2]);
         //printf(" Body Lin v:  %lf, %lf, %lf\n", linVelocity[0], linVelocity[1], linVelocity[2]);
 
         // update angular velocity.
@@ -194,8 +220,13 @@ public:
     COMM_FUNC void updateVelocityChange(Real dt)
     {
         // update linear velocity.
-        linVelocity += (pose.position - prevPose.position) / dt;
 
+		Vector<Real, 3> lastVel = linVelocity;
+		
+        linVelocity += (pose.position - prevPose.position) / dt;
+		/*printf("velocity from update VC: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			lastVel[0], lastVel[1], lastVel[2],
+			linVelocity[0], linVelocity[1], linVelocity[2]);*/
         //printf(" Body Lin v:  %lf, %lf, %lf\n", linVelocity[0], linVelocity[1], linVelocity[2]);
 
         // update angular velocity.

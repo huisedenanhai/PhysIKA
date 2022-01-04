@@ -537,7 +537,7 @@ inline void ParticleSandSimulationRegion::Init(const SandSimulationRegionCreateI
     sandinfo.nx               = info.height_resolution_x;
     sandinfo.ny               = info.height_resolution_y;
     sandinfo.griddl           = info.grid_physical_size;
-    sandinfo.mu               = 0.7;
+    sandinfo.mu               = 0.8;//0.7
     sandinfo.drag             = 0.95;
     sandinfo.slide            = 10 * sandinfo.griddl;
     sandinfo.sandRho          = 1000.0;
@@ -931,7 +931,7 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
 	std::shared_ptr<SandSimulator> sandSim = std::make_shared<SandSimulator>();
 	std::shared_ptr<SSESandSolver> psandSolver = std::make_shared<SSESandSolver>();
 	//m_psandsolver                              = psandSolver;
-	psandSolver->setCFLNumber(0.5);//0.3 need adapting
+	psandSolver->setCFLNumber(0.1);//0.3 need adapting
 	sandSim->needForward(true);//false
 	sandSim->setSandSolver(psandSolver);
 	root->setSandSolver(psandSolver);

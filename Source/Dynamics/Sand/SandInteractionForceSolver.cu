@@ -60,6 +60,9 @@ __global__ void SandIFS_updateSinkInfo(
         bodyi.pose.invTransform(pointd);
         Vector3f pointf(pointd[0], pointd[1], pointd[2]);
 
+		//Vector3f pointfBottom(pointd[0], 0, pointd[2]);
+
+
         Vector3f normalf;
         float    dis;
         sdf.getDistance(pointf, dis, normalf);
@@ -81,23 +84,35 @@ __global__ void SandIFS_updateSinkInfo(
             {
                 htop      = curh;
                 normaltop = Vector3d(normalf[0], normalf[1], normalf[2]);
+				if (normalf[1] > 0)
+					normaltop = Vector3d(0, -1, 0);
                 bodyi.pose.rotate(normaltop);
             }
             if (hbot > curh)
             {
                 hbot      = curh;
                 normalbot = Vector3d(normalf[0], normalf[1], normalf[2]);
+				if (normalf[1] > 0)
+					normalbot = Vector3d(0, -1, 0);
                 bodyi.pose.rotate(normalbot);
             }
+
+			
         }
 
         curh -= dh;
     }
 
+	/*if (hbot < (htop + hland) / 2.0f)
+		hbot = (htop + hland) / 2.0f;*/
+
     topH[tid]      = htop;
     botH[tid]      = hbot;
     topNormal[tid] = normaltop;
     botNormal[tid] = normalbot;
+
+	//if(htop - hbot > EPSILON)
+	//	printf("sink info: %.10lf %.10lf %.10lf %.10lf\n", htop, hbot, hland, pointd[1]);
 }
 
 __global__ void SandIFS_computeBuoyancy(
@@ -129,6 +144,7 @@ __global__ void SandIFS_computeBuoyancy(
 
         double hland = land.get(pointd[0], pointd[2]);
         double force = gravity * massArr[tid] * (htop - hbot) / (pointd[1] - hland);
+
 
         buoF[botid][0] = 0;  // force * botNor[tid][0] / (botNor[tid][1] - 1e-2);
         buoF[botid][1] = force;
@@ -579,7 +595,7 @@ void SandInteractionForceSolver::computeSingleDragForce(int i, Real dt)
 }
 
 __global__ void SandIFS_updateParticleVel(
-    DeviceDArray<Vector3d>           dVel,
+    DeviceDArray<Vector3d>           dVel,//target
     DeviceDArray<Vector3d>           parVel,
     DeviceDArray<double>             massArr,
     DeviceDArray<Vector3d>           posArr,
@@ -610,7 +626,8 @@ __global__ void SandIFS_updateParticleVel(
     if (hsand < EPSILON)
         return;
 
-    Vector3d dvel;
+    Vector3d dvel;//cache
+
     //double curh = topH[tid];
     //while (curh > botH[tid])
     //{
@@ -618,14 +635,22 @@ __global__ void SandIFS_updateParticleVel(
     //	curp[1] = curh;
     //	Vector3d velObj = body[bodyid].getVelocityAt(curp);
     //	dvel += (velObj - parVel[tid])*((1.0 + e) * sampleDl);
-
     //	curh -= sampleDl;
     //}
-
     //dvel /= (topH[tid] - botH[tid]);
 
     posi[1]         = botH[tid];
     Vector3d velObj = body[bodyid].getVelocityAt(posi);
+
+	{
+		Vector3d v = posi - body[bodyid].pose.position;
+		v = body[bodyid].angVelocity.cross(v);
+		v += body[bodyid].linVelocity;
+
+		//printf("ObjLineVel = %.3lf  %.3lf  %.3lf\n", body[bodyid].linVelocity[0], body[bodyid].linVelocity[1], body[bodyid].linVelocity[2]);
+		velObj = v;
+	}
+
     dvel            = (velObj - parVel[tid]) * (1.0 + e);
     double dvelN    = (dvel.dot(botN[tid]));
     if (dvelN > 0)
@@ -639,7 +664,7 @@ __global__ void SandIFS_updateParticleVel(
     dvel[1] *= Cvertical;
 
     double     prob = (topH[tid] - botH[tid]) / hsand * Cprob;
-    RandNumber gen(posi[0] * 7000 + posi[2] * 999999);
+    RandNumber gen(glm::abs(posi[0]) * 7000 + glm::abs(posi[2]) * 999999);
     double     probval = gen.Generate();
 
     if (probval >= prob)
@@ -650,6 +675,9 @@ __global__ void SandIFS_updateParticleVel(
     dvel[1]   = dvel[1] > 0.0 ? 0.0 : dvel[1];
     dVel[tid] = dvel;
 
+	//printf("dvel = %.3lf  %.3lf  %.3lf\n", dvel[0], dvel[1], dvel[2]);
+	//printf("ObjVel = %.3lf  %.3lf  %.3lf\n", posi[0], posi[1], posi[2]);
+	
     ////dVel[tid] = Vector3d();
     //Vector3d finalvel = parVel[tid];// +dVel[tid];
     //Vector3d objLinv = body[bodyid].linVelocity;
@@ -861,8 +889,7 @@ void SandInteractionForceSolver::compute(Real dt)
 }
 
 void SandInteractionForceSolver::computeSingleBody(int i, Real dt)
-{
-
+{//problem
     if (!m_hostBody || !m_body || m_body->size() <= 0)
         return;
     if (!m_particlePos || m_particlePos->size() <= 0)
@@ -872,43 +899,20 @@ void SandInteractionForceSolver::computeSingleBody(int i, Real dt)
     if (m_prigids && !collisionValid((*m_prigids)[i]))
         return;
 
-    //// debug
-    //CTimer timer;
-
-    //timer.start();
     this->updateSinkInfo(i);
-    //timer.stop();
-    //printf("   Interact, Update SinkInfo time:  %lf\n", timer.getElapsedTime());
 
-    //timer.start();
     this->computeSingleBuoyance(i, dt);
-    //timer.stop();
-    //printf("   Interact, Buoyance time:  %lf\n", timer.getElapsedTime());
 
-    //timer.start();
     this->_copyHostBodyToGPU(i);
-    //timer.stop();
-    //printf("   Interact, Update body info time:  %lf\n", timer.getElapsedTime());
 
-    //timer.start();
     this->computeSingleDragForce(i, dt);
-    //timer.stop();
-    //printf("   Interact, Drag force time:  %lf\n", timer.getElapsedTime());
 
-    //timer.start();
     this->_copyHostBodyToGPU(i);
-    //timer.stop();
-    //printf("   Interact, Update body info time:  %lf\n", timer.getElapsedTime());
 
-    //timer.start();
-    this->computeParticleInteractVelocity(i, dt);
-    //timer.stop();
-    //printf("   Interact, Particle vel change time:  %lf\n", timer.getElapsedTime());
+    this->computeParticleInteractVelocity(i, dt);//touch here
 
-    //timer.start();
     this->_smoothVelocityChange();
-    //timer.stop();
-    //printf("   Interact, Smooth vel change time:  %lf\n", timer.getElapsedTime());
+
 }
 
 __global__ void SandIFS_smoothVelocityChange(
@@ -1060,7 +1064,8 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
     double   maxlinv = tmpv.norm();
     if (tmpv.dot(pbody->linVelocity) < 0 && linvnorm < /*m_gravity*dt * 0.5*/ maxlinv)
     {
-        pbody->linVelocity = Vector3d();
+		//printf("damping!\n");
+        //pbody->linVelocity = Vector3d();
         F                  = Vector3d();
     }
     double angvnorm = pbody->angVelocity.norm();

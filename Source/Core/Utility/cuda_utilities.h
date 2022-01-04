@@ -27,7 +27,7 @@
 namespace PhysIKA {
 
 #define INVALID -1
-#define EPSILON 1e-6
+#define EPSILON 1e-6//1e-6
 #define M_PI 3.14159265358979323846
 #define M_E 2.71828182845904523536
 

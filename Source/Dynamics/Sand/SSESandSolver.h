@@ -99,7 +99,7 @@ private:
     int m_threadBlocky = 16;
 
     float m_CFLNumber   = 0.1f;  // 0.1f;
-    float m_maxTimeStep = 0.04f;
+    float m_maxTimeStep = 0.0001f;//0.04f,0.0001f,∫Û”÷º”¡©0
 
     Reduction<float>*  m_CFLReduction = 0;
     DeviceArray<float> m_velocityNorm;

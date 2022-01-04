@@ -63,15 +63,13 @@ bool SSESandSolver::initialize()
 
 bool SSESandSolver::stepSimulation(float deltime)
 {
-
-
 	clock_t start, end;
 
 	start = clock();
 
     do
     {
-		double subdt = 0.001;//this->getMaxTimeStep();
+		double subdt = 0.001;//this->getMaxTimeStep();//cy0.001
         subdt        = subdt < deltime ? subdt : deltime;
         deltime -= subdt;
         printf("  Cur time step:  %f\n", subdt);
@@ -231,11 +229,29 @@ __global__ void g_updateVelocity(DeviceHeightField1d staticHeight, float4* grid_
 
         // apply pressure
         float g      = GRAVITY;
+		float maxv=0.5f;
         float hu_tmp = hu_old + timestep * g * fmaxf(fminf(h_d, center.x), 0) * sliding_dir.x;
+		//hu_tmp=hu_tmp>maxv?maxv:hu_tmp;//cut
         float hv_tmp = hv_old + timestep * g * fmaxf(fminf(h_d, center.x), 0) * sliding_dir.y;
+		//hv_tmp=hv_tmp>maxv?maxv:hv_tmp;//cut
+
+		//h=h>0.1?h:0.1;//cut
+
+		//hu_tmp=hu_tmp>50.0f?50.0f:hu_tmp;//wkm：set vel top
+		//hv_tmp=hv_tmp>50.0f?50.0f:hv_tmp;//no use？qs没截住！
+
+
 
         float2 vel_dir;
         float  vel_norm = sqrtf(hu_tmp * hu_tmp + hv_tmp * hv_tmp);
+
+		//if (vel_norm > 70.0f)//cut
+		//{
+		//	hu_tmp=50.0f;
+		//	hv_tmp=50.0f;
+		//	vel_norm=70.0f;
+		//}
+
         if (vel_norm < EPSILON)
         {
             vel_dir.x = 0.0f;
@@ -464,6 +480,9 @@ __global__ void g_getVelocityNorm(float* velocityNorm, int width, int height)
         gridpoint gp   = tex2D(texture_grid, x, y);
         float     velU = d_get_u(gp);
         float     velV = d_get_v(gp);
+		//cut
+		//if (velU>50.0)velU=50.0;
+		//if (velV>50.0)velV=50.0;
 
         grid2Dwrite(velocityNorm, x, y, width, sqrtf(velU * velU + velV * velV));
     }
@@ -497,12 +516,17 @@ float SSESandSolver::getMaxTimeStep()
 
     // Maximum velocity.
     float maxVel = m_CFLReduction->maximum(m_velocityNorm.begin(), ngrid);
+	//if(maxVel>70.0)maxVel=70.0;//cut
 
     // Maximum time step.
     float maxDl = m_CFLNumber * m_SandInfo.griddl;
     float dt    = m_maxTimeStep;
-    dt          = (maxDl > dt * maxVel) ? dt : maxDl / maxVel;
+    dt          = (maxDl > dt * maxVel) ? dt : maxDl / maxVel;//注释掉还会崩
 
+	std::cout<<"maxDl%f"<<maxDl<<endl;
+	std::cout<<"maxVel%f"<<maxVel<<endl;
+	std::cout<<"dt%f"<<dt<<endl;
+	//崩的那一瞬间，maxVel达到314！太大了！想办法截断！50以内很安全！
     return dt;
 }
 

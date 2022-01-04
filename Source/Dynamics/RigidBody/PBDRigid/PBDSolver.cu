@@ -1788,8 +1788,15 @@ __global__ void PBD_updateVelocityChange(PBDBodyInfo<double>* bodys,
             double alpha = ome / body->nContacts;  /// *(nConstraint + tid);
             alpha        = alpha > 1.0 ? 1.0 : alpha;
 
+			
+			Vector3d oldVel = body->linVelocity;
             body->linVelocity += (*(dlinv + tid)) * alpha;
             body->angVelocity += (*(dangv + tid)) * alpha;
+
+			printf("inside aaa  %.3lf  %.3lf %.3lf\n", 
+				body->linVelocity[0], body->linVelocity[1], body->linVelocity[2],
+				oldVel[0], oldVel[1], oldVel[2]
+				);
         }
     }
 }

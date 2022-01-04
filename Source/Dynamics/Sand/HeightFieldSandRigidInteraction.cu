@@ -154,30 +154,28 @@ void HeightFieldSandRigidInteraction::advect_new(Real dt)
 
 	if (m_rigidSolver && m_sandSolver)
 	{
-		_updateSandHeightField();//无法解析的外部符号
+		_updateSandHeightField();//
 		m_interactSolver->updateBodyAverageVel(dt);
 		int nrigid = m_rigidSolver->getRigidBodys().size();
 		for (int i = 0; i < nrigid; ++i)
 		{
 			//if (m_interactSolver->collisionValid(m_rigidSolver->getRigidBodys()[i]))
 			{
-				//设置一下每个刚体的碰撞过滤！
-
 				// Update info.
-				_updateGridParticleInfo(i);//无法解析的外部符号//注释掉沙子就不动了
+				_updateGridParticleInfo(i);
 
 				// Solve interaction force.
-				m_interactSolver->computeSingleBody(i, dt);//注释掉沙子就不动了
+				m_interactSolver->computeSingleBody(i, dt);
 
 				// Solver sand density constraint.
-				m_sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);//注释掉沙子就不动了
+				m_sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);
 			}
 		}
 	}
 
 	if (m_sandSolver)
 	{
-		m_sandSolver->updateVeclocity(dt);//有了它，效果上有点区别
+		m_sandSolver->updateVeclocity(dt);
 	}
 }
 

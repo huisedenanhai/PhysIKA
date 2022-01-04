@@ -36,7 +36,7 @@
 #include "connector_use_demo.h"
 
 using namespace std;
-
+//沉下去一些不会炸，沉没就会炸
 connector_use_demo* connector_use_demo::m_instance = 0;
 void                connector_use_demo::createScene()
 {
@@ -56,7 +56,7 @@ void                connector_use_demo::createScene()
     info.center.z                = 2;
     info.grid_physical_size      = 10.0 / 256;
     info.sand_layer_thickness    = 0.02;
-    info.time_delta              = 0.016;
+    info.time_delta              = 0.01;//0.016这是不是大了？//0.016大崩，0.001小崩，但变粘
     info.height_data             = &data[0];
     info.height_resolution_x     = 256;
     info.height_resolution_y     = 256;
@@ -121,7 +121,7 @@ void                connector_use_demo::createScene()
     m_region = VPE::SandSimulationRegion::Create(info);
     m_car    = m_region->GetCar(0);
     auto rb  = m_region->GetRigidBody(0);
-    rb->SetGlobalPositionRotation({ 0, 0.75, 0 }, { 0, 0, 0, 1 });//1,1,2
+    rb->SetGlobalPositionRotation({ 1, 0.2, 0 }, { 0, 0, 0, 1 });//1,1,2
 	
 
 
@@ -223,7 +223,7 @@ void                connector_use_demo::createScene()
 
             rigidbody->SetGlobalPositionRotation(
 			
-                { std::cos(total_time * 10.0f), /*0.25+*/std::cos(total_time * 10.0f)-0.25f, /*std::sin(total_time * 10.0f)*/0 },
+                { std::cos(total_time * 10.0f), /*0.25+*//*std::cos(total_time * 10.0f)+*/0.2f, std::sin(total_time * 10.0f)/*0*/ },
                 { 0, 0, 0, 1 });
 			
         }
