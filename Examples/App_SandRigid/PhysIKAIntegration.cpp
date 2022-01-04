@@ -26,7 +26,6 @@
 #include "Dynamics/Sand/SandVisualPointSampleModule.h"
 #include "IO/Image_IO/HeightFieldLoader.h"
 #include "GUI/GlutGUI/GLApp.h"
-#include "sandRigidCommon.h"
 
 #include "math.h"
 
@@ -102,6 +101,36 @@ bool ComputeBoundingBox(PhysIKA::Vector3f& center, PhysIKA::Vector3f& boxsize, c
     return true;
 }
 
+std::vector<int> GetRigidBodiesToUpdate(SandInteractionForceSolver* interactSolver)
+{
+    std::vector<int> rb_to_update{};
+    {
+        if (interactSolver->m_prigids)
+        {
+            int nrigid = interactSolver->m_prigids->size();
+            for (int i = 0; i < nrigid; ++i)
+            {
+                auto     rb        = interactSolver->m_prigids->at(i);
+                auto     center    = rb->getGlobalR();
+                auto     radius    = rb->getRadius();
+                auto     hf        = interactSolver->m_land;
+                auto     hf_center = hf->getOrigin();
+                Vector2f hf_size   = {
+                    float(hf->Nx() * hf->getDx()),
+                    float(hf->Ny() * hf->getDz()),
+                };
+                // Cull Sphere
+                if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[0] - radius > hf_center[0] + hf_size[0] * 0.5f || center[2] + radius < hf_center[2] - hf_size[1] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
+                {
+                    continue;
+                }
+                rb_to_update.push_back(i);
+            }
+        }
+    }
+    return rb_to_update;
+}
+
 // The particle sand simulation region without PBD rigid body solver
 class SandSolverNode : public ParticleSandRigidInteraction
 {
@@ -114,31 +143,7 @@ public:
         auto sandSolver     = getSandSolver();
         auto rigidSolver    = getRigidSolver();
 
-        std::vector<int> rb_to_update{};
-        {
-            if (interactSolver->m_prigids)
-            {
-                int nrigid = interactSolver->m_prigids->size();
-                for (int i = 0; i < nrigid; ++i)
-                {
-                    auto     rb        = interactSolver->m_prigids->at(i);
-                    auto     center    = rb->getGlobalR();
-                    auto     radius    = rb->getRadius();
-                    auto     hf        = interactSolver->m_land;
-                    auto     hf_center = hf->getOrigin();
-                    Vector2f hf_size   = {
-                        float(hf->Nx() * hf->getDx()),
-                        float(hf->Ny() * hf->getDz()),
-                    };
-                    // Cull Sphere
-                    if (center[0] + radius < hf_center[0] - hf_size[0] * 0.5f || center[0] - radius > hf_center[0] + hf_size[0] * 0.5f || center[2] + radius < hf_center[2] - hf_size[1] * 0.5f || center[2] - radius > hf_center[2] + hf_size[1] * 0.5f)
-                    {
-                        continue;
-                    }
-                    rb_to_update.push_back(i);
-                }
-            }
-        }
+        std::vector<int> rb_to_update = GetRigidBodiesToUpdate(interactSolver.get());
         if (rb_to_update.empty())
         {
             return;
@@ -190,7 +195,43 @@ class HeightFieldSandSolverNode : public HeightFieldSandRigidInteraction
 public:
     void advance(Real dt) override
     {
-        advect_new(dt);
+        VIWO_PROFILE_SCOPE_SAMPLE("Advance Height Field Sand Solver");
+
+        auto sandSolver     = getSandSolver();
+        auto interactSolver = getInteractionSolver();
+        auto rigidSolver    = getRigidSolver();
+
+        std::vector<int> rb_to_update = GetRigidBodiesToUpdate(interactSolver.get());
+        if (rb_to_update.empty())
+        {
+            return;
+        }
+
+        {
+            VIWO_PROFILE_SCOPE_SAMPLE("Advect Sand");
+            sandSolver->advection(dt);
+            sandSolver->updateSandGridHeight();
+        }
+
+        {
+            VIWO_PROFILE_SCOPE_SAMPLE("Coupling");
+
+            interactSolver->setPreBodyInfo();
+            rigidSolver->updateRigidToGPUBody();
+            _updateSandHeightField();  //
+            interactSolver->updateBodyAverageVel(dt);
+            for (auto i : rb_to_update)
+            {
+                _updateGridParticleInfo(i);
+                interactSolver->computeSingleBody(i, dt);
+                sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);
+            }
+        }
+
+        {
+            VIWO_PROFILE_SCOPE_SAMPLE("Update Velocity");
+            sandSolver->updateVeclocity(dt);
+        }
     }
 };
 
@@ -255,6 +296,8 @@ public:
     std::vector<std::shared_ptr<PhysIKARigidBody>>            m_rigidbody_wrappers{};
     std::shared_ptr<PhysIKA::PBDSandSolver>                   psandSolver;
 
+    std::shared_ptr<PhysIKA::PointSet<PhysIKA::DataType3f>> particleTopology;
+
 #if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     std::vector<std::shared_ptr<PhysIKA::RigidMeshRender>> m_rigidRenders;
 #endif
@@ -277,11 +320,11 @@ public:
         return nullptr;
     }
 
-    double* GetSandParticlesDevicePtr(size_t& particle_num) override
+    float* GetSandParticlesDevicePtr(size_t& particle_num) override
     {
-        auto& pos_d  = psandSolver->getParticlePosition3D();
-        particle_num = pos_d.size();
-        return reinterpret_cast<double*>(pos_d.begin());
+        auto& p      = particleTopology->getPoints();
+        particle_num = p.size();
+        return reinterpret_cast<float*>(p.getDataPtr());
     }
 
     void Init(const SandSimulationRegionCreateInfo& info);
@@ -326,13 +369,14 @@ public:
     PhysIKA::Quaternion<float>                                carRotation;
     std::vector<PhysIKA::RigidBody2_ptr>                      m_rigids;
     std::vector<std::shared_ptr<PhysIKARigidBody>>            m_rigidbody_wrappers{};
-
-    std::shared_ptr<PhysIKA::PBDSandSolver> psandSolver;
+    std::shared_ptr<PhysIKA::PBDSandSolver>                   psandSolver;
 
     std::vector<float> landHeight;
     std::vector<float> surfaceHeight;
 
     HeightFieldLoader hfloader;
+
+    std::shared_ptr<PhysIKA::PointSet<PhysIKA::DataType3f>> particleTopology;
 
 #if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     std::vector<std::shared_ptr<PhysIKA::RigidMeshRender>> m_rigidRenders;
@@ -356,11 +400,11 @@ public:
         return nullptr;
     }
 
-    double* GetSandParticlesDevicePtr(size_t& particle_num) override
+    float* GetSandParticlesDevicePtr(size_t& particle_num) override
     {
-        auto& pos_d  = psandSolver->getParticlePosition3D();
-        particle_num = pos_d.size();
-        return reinterpret_cast<double*>(pos_d.begin());
+        auto& p      = particleTopology->getPoints();
+        particle_num = p.size();
+        return reinterpret_cast<float*>(p.getDataPtr());
     }
 
     void Init(const SandSimulationRegionCreateInfo& info);
@@ -612,16 +656,14 @@ inline void ParticleSandSimulationRegion::Init(const SandSimulationRegionCreateI
 #endif
 
     // 11 topology
-    auto topology = std::make_shared<PhysIKA::PointSet<PhysIKA::DataType3f>>();
-    sandSim->setTopologyModule(topology);
-    topology->getPoints().resize(1);
+    particleTopology = std::make_shared<PhysIKA::PointSet<PhysIKA::DataType3f>>();
+    sandSim->setTopologyModule(particleTopology);
+    particleTopology->getPoints().resize(1);
 
-#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     // 12 Render point sampler (module).
     auto psampler = std::make_shared<PhysIKA::ParticleSandRenderSampler>();
     psampler->Initialize(psandSolver);
     sandSim->addCustomModule(psampler);
-#endif
 
     /// ------  Rigid ------------
     //13 PBD simulation
@@ -911,18 +953,16 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
 #endif
 
     // 11 topology
-    auto topology = std::make_shared<PhysIKA::PointSet<PhysIKA::DataType3f>>();
-    sandSim->setTopologyModule(topology);
-    topology->getPoints().resize(1);
+    particleTopology = std::make_shared<PhysIKA::PointSet<PhysIKA::DataType3f>>();
+    sandSim->setTopologyModule(particleTopology);
+    particleTopology->getPoints().resize(1);
 
-#if PHYSIKA_INTEGRATION_INIT_RENDER > 0
     // 12 Render point sampler (module).
     auto psampler          = std::make_shared<PhysIKA::SandHeightRenderParticleSampler>();
     psampler->m_sandHeight = &sandGrid.m_sandHeight;
     psampler->m_landHeight = &sandGrid.m_landHeight;
     psampler->Initalize(sandinfo.nx, sandinfo.ny, 3, 2, sandinfo.griddl);
     sandSim->addCustomModule(psampler);
-#endif
 
     /// ------  Rigid ------------
     //13 PBD simulation

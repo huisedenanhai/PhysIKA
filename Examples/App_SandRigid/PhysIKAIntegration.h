@@ -160,8 +160,8 @@ public:
     virtual std::shared_ptr<PhysIKA::Node>         GetRoot()                       = 0;
     virtual std::shared_ptr<VPE::PhysIKACar>       GetCar(uint64_t car_index)      = 0;
     virtual std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index) = 0;
-    // Cuda device pointer, array of tightly packed dvec3
-    virtual double* GetSandParticlesDevicePtr(size_t& particle_num) = 0;
+    // Cuda device pointer, array of tightly packed vec3
+    virtual float* GetSandParticlesDevicePtr(size_t& particle_num) = 0;
 
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
 };
