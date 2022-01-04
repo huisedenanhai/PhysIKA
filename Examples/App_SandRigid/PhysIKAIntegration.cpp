@@ -190,13 +190,7 @@ class HeightFieldSandSolverNode : public HeightFieldSandRigidInteraction
 public:
     void advance(Real dt) override
     {
-        //advectSubStep(0.001);
-        //HeightFieldSandRigidInteraction::advance(dt);
-
-        //_setRigidForceAsGravity();
-        advect_new(dt);  //cy:write a new func in HeightFieldSandRigidInteraction,and use it here, to solve the problem of part  of func wufajiexi
-
-        //new bug vel is too big, so should set a top.
+        advect_new(dt);
     }
 };
 
@@ -283,24 +277,6 @@ public:
         return nullptr;
     }
 
-    std::vector<VPE::Vec3> GetSandParticles() override  ////VPE::Vec3*
-    {
-        auto&                          pos_d        = psandSolver->getParticlePosition3D();
-        auto                           particle_num = pos_d.size();
-        std::vector<PhysIKA::Vector3d> positions{};
-        positions.resize(particle_num);
-        cudaMemcpy(positions.data(), pos_d.begin(), sizeof(PhysIKA::Vector3d) * particle_num, cudaMemcpyDeviceToHost);
-        std::vector<VPE::Vec3> result{};
-        result.reserve(particle_num);
-        for (const auto& p : positions)
-        {
-            result.push_back(
-                VPE::Vec3{ static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2]) });
-        }
-
-        return result;
-    }
-
     double* GetSandParticlesDevicePtr(size_t& particle_num) override
     {
         auto& pos_d  = psandSolver->getParticlePosition3D();
@@ -308,13 +284,6 @@ public:
         return reinterpret_cast<double*>(pos_d.begin());
     }
 
-    double* GetSandParticlesRhoDevicePtr(size_t& particle_num) override
-    {
-        auto& rho_d  = psandSolver->getParticleRho2D();
-        particle_num = rho_d.size();
-        return reinterpret_cast<double*>(rho_d.begin());
-    }
-    //TODO
     void Init(const SandSimulationRegionCreateInfo& info);
 
     void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
@@ -387,24 +356,6 @@ public:
         return nullptr;
     }
 
-    std::vector<VPE::Vec3> GetSandParticles() override  ////VPE::Vec3*
-    {
-        auto&                          pos_d        = psandSolver->getParticlePosition3D();
-        auto                           particle_num = pos_d.size();
-        std::vector<PhysIKA::Vector3d> positions{};
-        positions.resize(particle_num);
-        cudaMemcpy(positions.data(), pos_d.begin(), sizeof(PhysIKA::Vector3d) * particle_num, cudaMemcpyDeviceToHost);
-        std::vector<VPE::Vec3> result{};
-        result.reserve(particle_num);
-        for (const auto& p : positions)
-        {
-            result.push_back(
-                VPE::Vec3{ static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2]) });
-        }
-
-        return result;
-    }
-
     double* GetSandParticlesDevicePtr(size_t& particle_num) override
     {
         auto& pos_d  = psandSolver->getParticlePosition3D();
@@ -412,13 +363,6 @@ public:
         return reinterpret_cast<double*>(pos_d.begin());
     }
 
-    double* GetSandParticlesRhoDevicePtr(size_t& particle_num) override
-    {
-        auto& rho_d  = psandSolver->getParticleRho2D();
-        particle_num = rho_d.size();
-        return reinterpret_cast<double*>(rho_d.begin());
-    }
-    //TODO
     void Init(const SandSimulationRegionCreateInfo& info);
 
     void AddSDF(const std::string& sdf_file, const Vec3& translate, int rigid_id)
