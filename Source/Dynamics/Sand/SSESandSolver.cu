@@ -523,9 +523,6 @@ float SSESandSolver::getMaxTimeStep()
     float dt    = m_maxTimeStep;
     dt          = (maxDl > dt * maxVel) ? dt : maxDl / maxVel;//注释掉还会崩
 
-	std::cout<<"maxDl%f"<<maxDl<<endl;
-	std::cout<<"maxVel%f"<<maxVel<<endl;
-	std::cout<<"dt%f"<<dt<<endl;
 	//崩的那一瞬间，maxVel达到314！太大了！想办法截断！50以内很安全！
     return dt;
 }

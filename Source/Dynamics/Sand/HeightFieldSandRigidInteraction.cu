@@ -113,8 +113,6 @@ void HeightFieldSandRigidInteraction::advance(Real dt)
             double subdt = m_sandSolver->getMaxTimeStep();
             subdt        = subdt < dt ? subdt : dt;
             dt -= subdt;
-            printf("  Cur time step:  %f\n", subdt);
-
             this->advectSubStep(subdt);
 
         } while (dt > 0);
@@ -126,7 +124,6 @@ void HeightFieldSandRigidInteraction::advance(Real dt)
     ++m_totalFrame;
     m_totalTime += elapTime;
     double avgTime = m_totalTime / m_totalFrame;
-    printf("Elapsed time:  %lf,  Average time: %lf\n", elapTime, avgTime);
 }
 
 void HeightFieldSandRigidInteraction::advect_new(Real dt)

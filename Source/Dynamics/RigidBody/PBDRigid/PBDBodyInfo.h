@@ -172,9 +172,6 @@ public:
 		
         linVelocity += dlinv;
         pose.position += dlinv * dt;
-		printf("velocity from integrate FTVP: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
-			lastVel[0], lastVel[1], lastVel[2],
-			linVelocity[0], linVelocity[1], linVelocity[2]);
 
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -205,9 +202,6 @@ public:
 		Vector<Real, 3> lastVel = linVelocity;
 		
         linVelocity = (pose.position - prevPose.position) / dt;
-		printf("velocity from update Velocity: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
-			lastVel[0], lastVel[1], lastVel[2],
-			linVelocity[0], linVelocity[1], linVelocity[2]);
         //printf(" Body Lin v:  %lf, %lf, %lf\n", linVelocity[0], linVelocity[1], linVelocity[2]);
 
         // update angular velocity.
