@@ -1,0 +1,6 @@
+# CMake generation dependency list for this directory.
+D:/PhysIKA/Source/Dynamics/FiniteElementMethod/Source/Solver/linear_solver/CMakeLists.txt
+D:/PhysIKA/dev/CMakeFiles/cmake.verify_globs
+D:/PhysIKA/dev/Source/Dynamics/FiniteElementMethod/Source/Solver/linear_solver/CMakeFiles/ZJU_LINEAR_SOLVER.dir/ZJU_LINEAR_SOLVER_generated_gpu_pcg.cu.obj.cmake.pre-gen
+D:/PhysIKA/dev/Source/Dynamics/FiniteElementMethod/Source/Solver/linear_solver/CMakeFiles/ZJU_LINEAR_SOLVER.dir/ZJU_LINEAR_SOLVER_generated_gpu_pcg.cu.obj.depend
+D:/cmake-3.15.7-win64-x64/share/cmake-3.15/Modules/FindCUDA/run_nvcc.cmake

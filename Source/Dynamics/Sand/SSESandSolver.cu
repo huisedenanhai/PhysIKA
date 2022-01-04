@@ -72,7 +72,7 @@ bool SSESandSolver::stepSimulation(float deltime)
 		double subdt = 0.001;//this->getMaxTimeStep();//cy0.001
         subdt        = subdt < deltime ? subdt : deltime;
         deltime -= subdt;
-        printf("  Cur time step:  %f\n", subdt);
+        //printf("  Cur time step:  %f\n", subdt);
 
         this->advection(subdt);
 

@@ -869,23 +869,23 @@ void SandInteractionForceSolver::compute(Real dt)
     if (!m_particlePos || m_particlePos->size() <= 0)
         return;
 
-    for (int i = 0; i < m_body->size(); ++i)
-    {
+    //for (int i = 0; i < m_body->size(); ++i)
+    //{
 
-        // Check collision filter.
-        if (m_prigids && !collisionValid((*m_prigids)[i]))
-            continue;
+    //    // Check collision filter.
+    //    if (m_prigids && !collisionValid((*m_prigids)[i]))
+    //        continue;
 
-        this->updateSinkInfo(i);
-        this->computeSingleBuoyance(i, dt);
-        this->_copyHostBodyToGPU(i);
-        this->computeSingleDragForce(i, dt);
-        this->_copyHostBodyToGPU(i);
+    //    this->updateSinkInfo(i);
+    //    this->computeSingleBuoyance(i, dt);
+    //    this->_copyHostBodyToGPU(i);
+    //    this->computeSingleDragForce(i, dt);
+    //    this->_copyHostBodyToGPU(i);
 
-        this->computeParticleInteractVelocity(i, dt);
+    //    this->computeParticleInteractVelocity(i, dt);
 
-        this->_smoothVelocityChange();
-    }
+    //    this->_smoothVelocityChange();
+    //}
 }
 
 void SandInteractionForceSolver::computeSingleBody(int i, Real dt)
