@@ -1,2 +1,0 @@
-21:52:49 | info    | Simulation begin
-21:52:49 | info    | PointRenderModule successfully initialized!

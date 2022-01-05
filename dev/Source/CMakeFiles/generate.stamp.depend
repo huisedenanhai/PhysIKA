@@ -1,7 +1,0 @@
-# CMake generation dependency list for this directory.
-D:/PhysIKA/Source/CMakeLists.txt
-D:/PhysIKA/Source/PhysIKAConfig.cmake.in
-D:/PhysIKA/dev/CMakeFiles/cmake.verify_globs
-D:/cmake-3.15.7-win64-x64/share/cmake-3.15/Modules/BasicConfigVersion-AnyNewerVersion.cmake.in
-D:/cmake-3.15.7-win64-x64/share/cmake-3.15/Modules/CMakePackageConfigHelpers.cmake
-D:/cmake-3.15.7-win64-x64/share/cmake-3.15/Modules/WriteBasicConfigVersionFile.cmake
