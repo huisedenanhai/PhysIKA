@@ -224,7 +224,7 @@ public:
             {
                 _updateGridParticleInfo(i);
                 interactSolver->computeSingleBody(i, dt);
-                sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);
+                sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);//
             }
         }
 

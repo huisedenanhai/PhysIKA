@@ -93,6 +93,9 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
 {
     int x = threadIdx.x + blockIdx.x * blockDim.x;
     int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+	//printf("timestep = %.10lf   griddl = %.10lf\n", timestep, griddl);
+
     if (x < width && y < height)
     {
 
@@ -109,7 +112,10 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
         float4 westflux  = d_flux_v(west, center);
         float4 southflux = d_flux_u(center, south);
         float4 northflux = d_flux_u(north, center);
-        float4 flux      = eastflux - westflux + southflux - northflux;
+        float4 flux      = (eastflux - westflux + southflux - northflux) / 5.0f;
+		/*flux.x /= 4.0f;
+		flux.z /= 4.0f;
+		flux.y /= 4.0f;*/
         float4 u_center  = center - (timestep / griddl) * flux;
 
         if (u_center.x < EPSILON)
@@ -547,12 +553,13 @@ __global__ void SSESand_applyVelocityChange(
     int gj = lgj + minGj;
 
     //SSEUtil::idx2Grid(gi, gj, tid, sandinfo.nx);
-
+	bool cnt = false;
     float w_r = 0;
     if (SSEUtil::inRange(lgi + 1, lgj, sizeGi, sizeGj))
     {
         int idx_r = SSEUtil::grid2Idx(lgi + 1, lgj, sizeGi);
         w_r       = gridVel[idx_r][1];
+		cnt = true;
     }
 
     float w_l = 0;
@@ -560,6 +567,7 @@ __global__ void SSESand_applyVelocityChange(
     {
         int idx_l = SSEUtil::grid2Idx(lgi - 1, lgj, sizeGi);
         w_l       = gridVel[idx_l][1];
+		cnt = true;
     }
 
     float w_u = 0;
@@ -567,6 +575,7 @@ __global__ void SSESand_applyVelocityChange(
     {
         int idx_u = SSEUtil::grid2Idx(lgi, lgj - 1, sizeGi);
         w_u       = gridVel[idx_u][1];
+		cnt = true;
     }
 
     float w_d = 0;
@@ -574,8 +583,10 @@ __global__ void SSESand_applyVelocityChange(
     {
         int idx_d = SSEUtil::grid2Idx(lgi, lgj + 1, sizeGi);
         w_d       = gridVel[idx_d][1];
+		cnt = true;
     }
-
+	if (!cnt)
+		return;
     gridpoint gp = grid2Dread(sandinfo.data, gi, gj, sandinfo.pitch);
 
     gp.y = gridVel[tid][2] * gp.x;
@@ -583,8 +594,27 @@ __global__ void SSESand_applyVelocityChange(
 
     double dhu = sandinfo.griddl / 2.0 * (w_r - w_l);
     double dhv = sandinfo.griddl / 2.0 * (w_d - w_u);
+
+	/*if (glm::abs(dhu) > sandinfo.griddl)
+	{
+		dhu /= glm::abs(dhu);
+		dhu *= sandinfo.griddl;
+	}
+
+	if (glm::abs(dhv) > sandinfo.griddl)
+	{
+		dhv /= glm::abs(dhv);
+		dhv *= sandinfo.griddl;
+	}*/
+
+	
+
     gp.y += dhv;
     gp.z += dhu;
+
+
+	/*if (!(glm::abs(gp.y) < EPSILON && glm::abs(gp.z) < EPSILON))
+		printf("ghuv = %.10lf     %.10lf\n", gp.y, gp.z);*/
 
     //if (w_r != 0 || w_l != 0 || w_d != 0 || w_u != 0)
     //{
@@ -600,8 +630,8 @@ __global__ void SSESand_applyVelocityChange(
     //{
     //	printf("DHUV: %d %d,  %lf %lf %lf %lf\n",gi, gj, dhu, dhv, w_d, w_u);
     //}
-
-    grid2Dwrite(sandinfo.data, gi, gj, sandinfo.pitch, gp);
+	
+	grid2Dwrite(sandinfo.data, gi, gj, sandinfo.pitch, gp);
 }
 
 void SSESandSolver::applyVelocityChange(float dt, int minGi, int minGj, int sizeGi, int sizeGj)
@@ -609,6 +639,12 @@ void SSESandSolver::applyVelocityChange(float dt, int minGi, int minGj, int size
     if (!m_gridVel)
         return;
 
+	/*printf("size = %d   grid size = %d  %d     %d %d\n",
+		m_gridVel->size(),
+		sizeGi,
+		sizeGj,
+		minGi,
+		minGj);*/
     cuExecute(m_gridVel->size(), SSESand_applyVelocityChange, m_SandInfo, *m_gridVel, minGi, minGj, sizeGi, sizeGj);
 }
 

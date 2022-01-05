@@ -132,11 +132,11 @@ __host__ __device__ inline float4 d_flux_v(float4 gpl, float4 gpr)
 {
     float hl  = fmaxf(gpl.x, 0.0f);
     float hl4 = hl * hl * hl * hl;
-    float vl  = sqrtf(2.0f) * hl * gpl.z / (sqrtf(hl4 + fmaxf(hl4, EPSILON)));
+    float vl  = sqrtf(2) * hl * gpl.z / (sqrtf(hl4 + fmaxf(hl4, EPSILON)));
 
     float hr  = fmaxf(gpr.x, 0.0f);
     float hr4 = hr * hr * hr * hr;
-    float vr  = sqrtf(2.0f) * hr * gpr.z / (sqrtf(hr4 + fmaxf(hr4, EPSILON)));
+    float vr  = sqrtf(2) * hr * gpr.z / (sqrtf(hr4 + fmaxf(hr4, EPSILON)));
 
     if (hl < EPSILON && hr < EPSILON)
     {

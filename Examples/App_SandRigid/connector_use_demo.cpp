@@ -54,7 +54,7 @@ void                connector_use_demo::createScene()
     info.center.y                = 100;
     info.center.x                = 2;
     info.center.z                = 2;
-    info.grid_physical_size      = 10.0 / 256;
+    info.grid_physical_size      = 2.0 / 256;//10.0/256
     info.sand_layer_thickness    = 0.02;
     info.time_delta              = 0.01;  //0.016这是不是大了？//0.016大崩，0.001小崩，但变粘
     info.height_data             = &data[0];

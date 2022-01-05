@@ -262,6 +262,10 @@ void SandInteractionForceSolver::computeSingleBuoyance(int i, Real dt)
 
     double relvdf = thrust::reduce(thrust::device, m_relvDf.begin(), m_relvDf.begin() + m_relvDf.size(), ( double )0.0, thrust::plus<double>());
 
+	/*buoF /= 25.0f;
+	buoT /= 25.0f;
+	relvdf /= 25.0f;
+*/
     //// debug
     //HostDArray<Vector3d> hostF;
     //hostF.resize(m_buoyancyF.size());
@@ -534,6 +538,11 @@ void SandInteractionForceSolver::computeSingleDragForce(int i, Real dt)
 
     double relvdf = thrust::reduce(thrust::device, m_relvDf.begin(), m_relvDf.begin() + m_relvDf.size(), ( double )0.0, thrust::plus<double>());
 
+
+	/*dragF /= 25.0f;
+	dragT /= 25.0f;
+	relvdf /= 25.0f;*/
+
     timer.stop();
     //printf("      DragForce summation time:  %lf \n", timer.getElapsedTime());
 
@@ -765,6 +774,7 @@ __global__ void SandIFS_updateParticleVel_Stick(
     dvel[1]   = dvel[1] > 0.0 ? 0.0 : dvel[1];
     dVel[tid] = dvel;
 
+	//printf("dvel = %.10lf\n", dvel[1]);
     //parVel[tid][1] = 0.0;
 }
 
@@ -945,6 +955,10 @@ __global__ void SandIFS_smoothVelocityChange(
     if (weight > EPSILON /*&& nbSize>5*/)
     {
         dv /= weight;
+
+		
+
+
         parVel[tid] += dv;
 
         /*if (dv[0] < -0.05)
@@ -961,13 +975,10 @@ __global__ void SandIFS_directUpdateVelocityChange(
     if (tid >= parVel.size())
         return;
 
+
     parVel[tid] += dVel[tid];
 
-    //// debug
-    //if (dVel[tid][0] != 0 || dVel[tid][1] != 0 || dVel[tid][2] != 0)
-    //{
-    //	printf("ParticleVel: %lf %lf %lf\n", parVel[tid][0], parVel[tid][1], parVel[tid][2]);
-    //}
+    
 }
 
 void SandInteractionForceSolver::_smoothVelocityChange()
@@ -1062,6 +1073,9 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
 
     Vector3d tmpv    = F * (pbody->invMass * dt);
     double   maxlinv = tmpv.norm();
+
+	//printf("force norm = %.10lf    %.10lf\n", F.norm(), T.norm());
+
     if (tmpv.dot(pbody->linVelocity) < 0 && linvnorm < /*m_gravity*dt * 0.5*/ maxlinv)
     {
 		//printf("damping!\n");
