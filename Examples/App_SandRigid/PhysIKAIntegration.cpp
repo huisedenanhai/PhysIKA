@@ -206,7 +206,7 @@ public:
         {
             return;
         }
-
+		for(int tmp = 0; tmp < 4; tmp ++)//20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid. 
         {
             VIWO_PROFILE_SCOPE_SAMPLE("Advect Sand");
             sandSolver->advection(dt);
