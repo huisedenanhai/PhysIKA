@@ -54,12 +54,12 @@ void                connector_use_demo::createScene()
     info.center.y                = 100;
     info.center.x                = 2;
     info.center.z                = 2;
-    info.grid_physical_size      = 2.0 / 256;//10.0/256
+    info.grid_physical_size      = 0.32;//10.0/256,2.0/256
     info.sand_layer_thickness    = 0.02;
     info.time_delta              = 0.01;  //0.016这是不是大了？//0.016大崩，0.001小崩，但变粘
     info.height_data             = &data[0];
-    info.height_resolution_x     = 256;
-    info.height_resolution_y     = 256;
+    info.height_resolution_x     = 128;
+    info.height_resolution_y     = 128;
 
     //info.sand_solver_algorithm = VPE::SandSolverAlgorithm::Particle;
 
@@ -98,7 +98,7 @@ void                connector_use_demo::createScene()
 
     VPE::PhysIKARigidBodyCreateInfo rb_info{};
     rb_info.mass       = 1.0f;
-    rb_info.scale      = 0.15f;
+    rb_info.scale      = 1.0f;//0.15
     rb_info.shape_path = "../../Media/standard/standard_cube.obj";
     rb_info.sdf_path   = "../../Media/standard/standard_cube.sdf";
     /*rb_info.shape_path = "../../Media/standard/standard_sphere.obj";
@@ -118,7 +118,7 @@ void                connector_use_demo::createScene()
     m_region = VPE::SandSimulationRegion::Create(info);
     m_car    = m_region->GetCar(0);
     auto rb  = m_region->GetRigidBody(0);
-    rb->SetGlobalPositionRotation({ 1, 0.2, 0 }, { 0, 0, 0, 1 });  //1,1,2
+    rb->SetGlobalPositionRotation({ 10, 0.2, 0 }, { 0, 0, 0, 1 });  //1,1,2
 
     class UpdateNode : public Node
     {
@@ -215,7 +215,7 @@ void                connector_use_demo::createScene()
 
             rigidbody->SetGlobalPositionRotation(
 
-                { std::cos(total_time * 10.0f), /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f) /*0*/ },
+                { std::cos(total_time * 10.0f)*10, /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f)*10 /*0*/ },
                 { 0, 0, 0, 1 });
         }
     };

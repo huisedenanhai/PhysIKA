@@ -328,8 +328,8 @@ __global__ void HFSRI_updateHeightField(
     if (tidx >= sandinfo.nx || tidy >= sandinfo.ny)
         return;
     gridpoint gp           = grid2Dread(sandinfo.data, tidx, tidy, sandinfo.pitch);
-	landheight(tidx, tidy) = gp.w;//min(gp.w,0.2);
-	sandheight(tidx, tidy) = gp.x;//min(gp.x,0.2);
+	landheight(tidx, tidy) = min(gp.w, 1.2f);//height min-cut 20220107
+	sandheight(tidx, tidy) = min(gp.x, 1.2f);
 	/*if((!(gp.w < 0.2f)) || (!(gp.x < 0.2f)))
 		printf("x = %.10lf   w = %.10lf\n", gp.x, gp.w);*/
 }
@@ -388,16 +388,16 @@ void HeightFieldSandRigidInteraction::_computeBoundingGrid(int& minGx, int& minG
 {
     Vector3d minp(center[0] - radius * 5, center[1], center[2] - radius * 5);
     int2     minG = m_sandHeight->gridIndex(minp);
-    minGx         = minG.x - 80;
+    minGx         = minG.x - 3;
     minGx         = max(minGx, 0);
-    minGz         = minG.y - 80;
+    minGz         = minG.y - 3;
     minGz         = max(minGz, 0);
 
     Vector3d maxp(center[0] + radius * 5, center[1], center[2] + radius * 5);
     int2     maxG = m_sandHeight->gridIndex(maxp);
-    maxGx         = maxG.x + 80;
+    maxGx         = maxG.x + 3;
     maxGx         = min(maxGx, m_sandHeight->Nx());
-    maxGz         = maxG.y + 80;
+    maxGz         = maxG.y + 3;
     maxGz         = min(maxGz, m_sandHeight->Ny());
 }
 }  // namespace PhysIKA

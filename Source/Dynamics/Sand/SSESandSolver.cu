@@ -112,7 +112,12 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
         float4 westflux  = d_flux_v(west, center);
         float4 southflux = d_flux_u(center, south);
         float4 northflux = d_flux_u(north, center);
-        float4 flux      = (eastflux - westflux + southflux - northflux) / 5.0f;
+        float4 flux      = (eastflux - westflux + southflux - northflux) / 2.0f;
+		// divergency(div,sandu)20220107
+		// also the velocity of sand going towards neighbor grids 
+		// in general, smaller flux is more robust, but looks worse
+
+
 		/*flux.x /= 4.0f;
 		flux.z /= 4.0f;
 		flux.y /= 4.0f;*/
@@ -595,17 +600,17 @@ __global__ void SSESand_applyVelocityChange(
     double dhu = sandinfo.griddl / 2.0 * (w_r - w_l);
     double dhv = sandinfo.griddl / 2.0 * (w_d - w_u);
 
-	/*if (glm::abs(dhu) > sandinfo.griddl)
+	if (glm::abs(dhu) > sandinfo.griddl / 1.41421)
 	{
 		dhu /= glm::abs(dhu);
-		dhu *= sandinfo.griddl;
+		dhu *= sandinfo.griddl / 1.41421;
 	}
 
-	if (glm::abs(dhv) > sandinfo.griddl)
+	if (glm::abs(dhv) > sandinfo.griddl / 1.41421)
 	{
 		dhv /= glm::abs(dhv);
-		dhv *= sandinfo.griddl;
-	}*/
+		dhv *= sandinfo.griddl / 1.41421;
+	}
 
 	
 

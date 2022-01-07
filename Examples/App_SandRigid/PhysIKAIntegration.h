@@ -39,7 +39,7 @@ enum class PhysIKACarType
 struct PhysIKACarComponent
 {
     Vec3        translation{};
-    Vec3        scale{ 1.0f, 1.0f, 1.0f };
+    Vec3        scale{ 3.0f, 3.0f, 3.0f };
     Quat        rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
     std::string model_path{};
     std::string sdf_path{};
@@ -123,8 +123,8 @@ public:
 
 struct PhysIKARigidBodyCreateInfo
 {
-    float       mass  = 0;
-    float       scale = 1.0f;
+    float       mass  = 1.0;
+    float       scale = 6.0f;
     std::string shape_path{};  // .obj
     std::string sdf_path{};
 };

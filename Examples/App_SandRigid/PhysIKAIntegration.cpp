@@ -206,8 +206,12 @@ public:
         {
             return;
         }
-		for(int tmp = 0; tmp < 4; tmp ++)//20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid. 
-        {
+		for(int tmp = 0; tmp < 1; tmp ++)//20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid. 
+        {// loop for the integration of the height field: 20220107
+		 // the CFL condition constraints the velocity of sand, so we have to 
+		 // run the integration more times when the velocity is too small
+		 // CFL conditions: velocity gets small when the relative grid size is small
+
             VIWO_PROFILE_SCOPE_SAMPLE("Advect Sand");
             sandSolver->advection(dt);
             sandSolver->updateSandGridHeight();
@@ -881,7 +885,7 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
         for (int i = 0; i < sandinfo.nx; ++i)
         {
             double aa                          = info.height_data[j * sandinfo.nx + i];
-            surfaceHeight[j * sandinfo.nx + i] = aa + 0.05f;  //thick=0.05
+            surfaceHeight[j * sandinfo.nx + i] = aa + 0.05f * 10;  //thick=0.05
         }
     }
 

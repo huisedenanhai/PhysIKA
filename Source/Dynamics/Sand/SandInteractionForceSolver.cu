@@ -68,37 +68,45 @@ __global__ void SandIFS_updateSinkInfo(
         sdf.getDistance(pointf, dis, normalf);
         normalf *= -1;
 
-        if (dis <= 0)
-        {
+		///////////////////////
+		normalbot = normaltop = Vector3d(0, -1, 0);
+		htop = curh;
+		hbot = hland;
+		bodyi.pose.rotate(normaltop);
+		bodyi.pose.rotate(normalbot);
+		break;
+		//////////////////////////
+    //    if (dis <= 0)
+    //    {
 
-            //Vector3d tmpp = positions[tid];
-            //tmpp[1] = curh;
-            //tmpp -= bodyi.pose.position;
-            //double tmpnorm = tmpp.norm();
-            //printf("detected: %lf,  %lf; %lf %lf %lf;  %lf %lf %lf\n", dis, tmpnorm,
-            //	bodyi.pose.position[0], bodyi.pose.position[1], bodyi.pose.position[2],
-            //	positions[tid][0], curh, positions[tid][2]
-            //	);
+    //        //Vector3d tmpp = positions[tid];
+    //        //tmpp[1] = curh;
+    //        //tmpp -= bodyi.pose.position;
+    //        //double tmpnorm = tmpp.norm();
+    //        //printf("detected: %lf,  %lf; %lf %lf %lf;  %lf %lf %lf\n", dis, tmpnorm,
+    //        //	bodyi.pose.position[0], bodyi.pose.position[1], bodyi.pose.position[2],
+    //        //	positions[tid][0], curh, positions[tid][2]
+    //        //	);
 
-            if (htop < curh)
-            {
-                htop      = curh;
-                normaltop = Vector3d(normalf[0], normalf[1], normalf[2]);
-				if (normalf[1] > 0)
-					normaltop = Vector3d(0, -1, 0);
-                bodyi.pose.rotate(normaltop);
-            }
-            if (hbot > curh)
-            {
-                hbot      = curh;
-                normalbot = Vector3d(normalf[0], normalf[1], normalf[2]);
-				if (normalf[1] > 0)
-					normalbot = Vector3d(0, -1, 0);
-                bodyi.pose.rotate(normalbot);
-            }
+    //        if (htop < curh)
+    //        {
+    //            htop      = curh;
+    //            normaltop = Vector3d(normalf[0], normalf[1], normalf[2]);
+				//if (normalf[1] > 0)
+				//	normaltop = Vector3d(0, -1, 0);
+    //            bodyi.pose.rotate(normaltop);
+    //        }
+    //        if (hbot > curh)
+    //        {
+    //            hbot      = curh;
+    //            normalbot = Vector3d(normalf[0], normalf[1], normalf[2]);
+				//if (normalf[1] > 0)
+				//	normalbot = Vector3d(0, -1, 0);
+    //            bodyi.pose.rotate(normalbot);
+    //        }
 
 			
-        }
+    //    }
 
         curh -= dh;
     }
@@ -1079,7 +1087,7 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
     if (tmpv.dot(pbody->linVelocity) < 0 && linvnorm < /*m_gravity*dt * 0.5*/ maxlinv)
     {
 		//printf("damping!\n");
-        //pbody->linVelocity = Vector3d();
+		pbody->linVelocity -= (tmpv / tmpv.norm() * (tmpv.dot(pbody->linVelocity) / tmpv.norm()));//Vector3d();
         F                  = Vector3d();
     }
     double angvnorm = pbody->angVelocity.norm();
