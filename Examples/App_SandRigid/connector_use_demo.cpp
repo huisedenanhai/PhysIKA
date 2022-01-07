@@ -215,7 +215,7 @@ void                connector_use_demo::createScene()
 
             rigidbody->SetGlobalPositionRotation(
 
-                { std::cos(total_time * 10.0f)*10, /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f)*10 /*0*/ },
+                { std::cos(total_time * 10.0f*10.0f)*10, /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f*10.0f)*10 /*0*/ },
                 { 0, 0, 0, 1 });
         }
     };

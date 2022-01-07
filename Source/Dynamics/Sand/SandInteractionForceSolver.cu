@@ -659,14 +659,23 @@ __global__ void SandIFS_updateParticleVel(
     posi[1]         = botH[tid];
     Vector3d velObj = body[bodyid].getVelocityAt(posi);
 
-	{
-		Vector3d v = posi - body[bodyid].pose.position;
-		v = body[bodyid].angVelocity.cross(v);
-		v += body[bodyid].linVelocity;
+	if (!(velObj.norm() < 1000000.0f)) //prevent nan velocities
+		velObj = Vector3d(0);
 
-		//printf("ObjLineVel = %.3lf  %.3lf  %.3lf\n", body[bodyid].linVelocity[0], body[bodyid].linVelocity[1], body[bodyid].linVelocity[2]);
-		velObj = v;
+	if (velObj.norm() > 25.0f) //damp velocity for height field 20220107
+	{
+		velObj /= velObj.norm();
+		velObj *= 25.0f;
 	}
+
+	//{
+	//	Vector3d v = posi - body[bodyid].pose.position;
+	//	v = body[bodyid].angVelocity.cross(v);
+	//	v += body[bodyid].linVelocity;
+
+	//	//printf("ObjLineVel = %.3lf  %.3lf  %.3lf\n", body[bodyid].linVelocity[0], body[bodyid].linVelocity[1], body[bodyid].linVelocity[2]);
+	//	velObj = v;
+	//}
 
     dvel            = (velObj - parVel[tid]) * (1.0 + e);
     double dvelN    = (dvel.dot(botN[tid]));
@@ -754,6 +763,15 @@ __global__ void SandIFS_updateParticleVel_Stick(
         Vector3d curp   = posi;
         curp[1]         = curh;
         Vector3d velObj = /*body[bodyid].linVelocity;*/ body[bodyid].getVelocityAt(curp);
+
+		if (!(velObj.norm() < 1000000.0f)) //prevent nan velocities
+			velObj = Vector3d(0);
+
+		if (velObj.norm() > 15.0f)
+		{ 
+			velObj /= velObj.norm();
+			velObj *= 15.0f;
+		}
         dvel += velObj * sampleDl;
 
         curh -= sampleDl;
@@ -796,10 +814,12 @@ void SandInteractionForceSolver::computeParticleInteractVelocity(int i, Real dt)
 
     if (m_useStickParticleVelUpdate)
     {
+		printf("yes \n");
         cuExecute(m_particlePos->size(), SandIFS_updateParticleVel_Stick, m_dVel, *m_particleVel, *m_particleMass, *m_particlePos, m_topH, m_botH, m_topNormal, m_botNormal, *m_land, *m_body, i, m_sampleSize, m_rho, m_e, m_CsHorizon, m_CsVertical);
     }
     else
     {
+		printf("yes2 \n");
         cuExecute(m_particlePos->size(), SandIFS_updateParticleVel, m_dVel, *m_particleVel, *m_particleMass, *m_particlePos, m_topH, m_botH, m_topNormal, m_botNormal, *m_land, *m_body, i, m_sampleSize, m_rho, m_e, m_CsHorizon, m_CsVertical, m_Cprob);
     }
 }
@@ -1083,6 +1103,15 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
     double   maxlinv = tmpv.norm();
 
 	//printf("force norm = %.10lf    %.10lf\n", F.norm(), T.norm());
+
+	printf("body lin Vel: %.10lf %.10lf %.10lf\n", 
+		pbody->linVelocity[0],
+		pbody->linVelocity[1],
+		pbody->linVelocity[2]
+		);
+
+	if(!(pbody->linVelocity.norm() < 10000.0f))
+		pbody->linVelocity = Vector3d();
 
     if (tmpv.dot(pbody->linVelocity) < 0 && linvnorm < /*m_gravity*dt * 0.5*/ maxlinv)
     {
