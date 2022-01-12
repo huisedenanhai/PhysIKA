@@ -206,11 +206,11 @@ public:
         {
             return;
         }
-		for(int tmp = 0; tmp < 1; tmp ++)//20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid. 
-        {// loop for the integration of the height field: 20220107
-		 // the CFL condition constraints the velocity of sand, so we have to 
-		 // run the integration more times when the velocity is too small
-		 // CFL conditions: velocity gets small when the relative grid size is small
+        for (int tmp = 0; tmp < 1; tmp++)  //20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid.
+        {                                  // loop for the integration of the height field: 20220107
+                                           // the CFL condition constraints the velocity of sand, so we have to
+                                           // run the integration more times when the velocity is too small
+                                           // CFL conditions: velocity gets small when the relative grid size is small
 
             VIWO_PROFILE_SCOPE_SAMPLE("Advect Sand");
             sandSolver->advection(dt);
@@ -228,7 +228,7 @@ public:
             {
                 _updateGridParticleInfo(i);
                 interactSolver->computeSingleBody(i, dt);
-                sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);//
+                sandSolver->applyVelocityChange(dt, m_minGi, m_minGj, m_sizeGi, m_sizeGj);  //
             }
         }
 
@@ -373,7 +373,7 @@ public:
     PhysIKA::Quaternion<float>                                carRotation;
     std::vector<PhysIKA::RigidBody2_ptr>                      m_rigids;
     std::vector<std::shared_ptr<PhysIKARigidBody>>            m_rigidbody_wrappers{};
-    std::shared_ptr<PhysIKA::PBDSandSolver>                   psandSolver;
+    std::shared_ptr<PhysIKA::SSESandSolver>                   psandSolver;
 
     std::vector<float> landHeight;
     std::vector<float> surfaceHeight;
@@ -409,6 +409,14 @@ public:
         auto& p      = particleTopology->getPoints();
         particle_num = p.size();
         return reinterpret_cast<float*>(p.getDataPtr());
+    }
+
+    double* GetSandHeightFieldDevicePtr(size_t& pitch) override
+    {
+        auto& sand_height =
+            psandSolver->getSandGrid().m_sandHeight;
+        pitch = sand_height.Pitch();
+        return sand_height.GetDataPtr();
     }
 
     void Init(const SandSimulationRegionCreateInfo& info);
@@ -910,8 +918,8 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
     root->varCVertical()->setValue(2.);
     //root->varCprobability()->setValue(100);
 
-    std::shared_ptr<SandSimulator> sandSim     = std::make_shared<SandSimulator>();
-    std::shared_ptr<SSESandSolver> psandSolver = std::make_shared<SSESandSolver>();
+    std::shared_ptr<SandSimulator> sandSim = std::make_shared<SandSimulator>();
+    psandSolver                            = std::make_shared<SSESandSolver>();
     //m_psandsolver                              = psandSolver;
     psandSolver->setCFLNumber(0.1);  //0.3 need adapting
     sandSim->needForward(true);      //false
@@ -965,7 +973,7 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
     auto psampler          = std::make_shared<PhysIKA::SandHeightRenderParticleSampler>();
     psampler->m_sandHeight = &sandGrid.m_sandHeight;
     psampler->m_landHeight = &sandGrid.m_landHeight;
-    psampler->Initalize(sandinfo.nx, sandinfo.ny, 3, 2, sandinfo.griddl);
+    psampler->Initalize(sandinfo.nx, sandinfo.ny, 6, 3, sandinfo.griddl);
     sandSim->addCustomModule(psampler);
 
     /// ------  Rigid ------------
@@ -1187,4 +1195,8 @@ void PhysIKARigidBody::SetAngularVelocity(const Vec3& w)
     _impl->rigid_body->setAngularVelocity(ToPhysIKA(w));
 }
 
+double* SandSimulationRegion::GetSandHeightFieldDevicePtr(size_t& pitch)
+{
+    return nullptr;
+}
 }  // namespace VPE

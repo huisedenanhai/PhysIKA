@@ -39,7 +39,7 @@ enum class PhysIKACarType
 struct PhysIKACarComponent
 {
     Vec3        translation{};
-    Vec3        scale{ 3.0f, 3.0f, 3.0f };
+    Vec3        scale{ 1.0f, 1.0f, 1.0f };
     Quat        rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
     std::string model_path{};
     std::string sdf_path{};
@@ -123,8 +123,8 @@ public:
 
 struct PhysIKARigidBodyCreateInfo
 {
-    float       mass  = 1.0;
-    float       scale = 6.0f;
+    float       mass  = 0;
+    float       scale = 1.0f;
     std::string shape_path{};  // .obj
     std::string sdf_path{};
 };
@@ -162,8 +162,9 @@ public:
     virtual std::shared_ptr<VPE::PhysIKARigidBody> GetRigidBody(uint64_t rb_index) = 0;
     // Cuda device pointer, array of tightly packed vec3
     virtual float* GetSandParticlesDevicePtr(size_t& particle_num) = 0;
+    // Only valid for HeightField method. The data has the same size as sand simulation region resolution
+    virtual double* GetSandHeightFieldDevicePtr(size_t& pitch);
 
     static std::shared_ptr<SandSimulationRegion> Create(const SandSimulationRegionCreateInfo& info);
 };
-
 }  // namespace VPE
