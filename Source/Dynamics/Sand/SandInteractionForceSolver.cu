@@ -666,9 +666,14 @@ __global__ void SandIFS_updateParticleVel(
 	{
 		velObj /= velObj.norm();
 		velObj *= 25.0f;
+		//格子本身速度没改，这是刚体本身，格子速度过大未解决
+		//velObj /= velObj.norm();
+		//velObj *= 10.0f;
 	}
+	//角速度截断,,,get函数是哪个？我发现底层文件里没写呀！
+	//body[bodyid]->angVelocity = Vector3d();
 
-	//{
+	//{//这段被早就注释掉的code涉及了角速度
 	//	Vector3d v = posi - body[bodyid].pose.position;
 	//	v = body[bodyid].angVelocity.cross(v);
 	//	v += body[bodyid].linVelocity;
@@ -939,7 +944,7 @@ void SandInteractionForceSolver::computeSingleBody(int i, Real dt)
 
     this->updateSinkInfo(i);
 
-    this->computeSingleBuoyance(i, dt);
+    this->computeSingleBuoyance(i, dt);//get rigid rotate here
 
     this->_copyHostBodyToGPU(i);
 
@@ -1119,14 +1124,22 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
 		pbody->linVelocity -= (tmpv / tmpv.norm() * (tmpv.dot(pbody->linVelocity) / tmpv.norm()));//Vector3d();
         F                  = Vector3d();
     }
-    double angvnorm = pbody->angVelocity.norm();
+
+    double angvnorm = pbody->angVelocity.norm();//20220112 angVelocity
     tmpv            = (T * pbody->invInertia * dt);
     double maxangv  = tmpv.norm();
-    if (tmpv.dot(pbody->angVelocity) < 0 && angvnorm < maxangv)
+    //if (tmpv.dot(pbody->angVelocity) < 0 && angvnorm < maxangv)
+	//just do here 20220112
     {
+		printf("do here\n");
         pbody->angVelocity = Vector3d();
         T                  = Vector3d();
     }
+	printf("body ang Vel: %.10lf %.10lf %.10lf %.10lf \n",
+		pbody->angVelocity[0],//actually zero.
+		pbody->angVelocity[1],
+		pbody->angVelocity[2]/*,
+		pbody->angVelocity[3]*/);
 }
 
 void SandInteractionForceSolver::_copyHostBodyToGPU(int i)

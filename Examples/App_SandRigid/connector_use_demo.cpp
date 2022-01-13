@@ -36,7 +36,7 @@
 #include "connector_use_demo.h"
 
 using namespace std;
-//沉下去一些不会炸，沉没就会炸
+
 connector_use_demo* connector_use_demo::m_instance = 0;
 void                connector_use_demo::createScene()
 {
@@ -99,10 +99,13 @@ void                connector_use_demo::createScene()
     VPE::PhysIKARigidBodyCreateInfo rb_info{};
     rb_info.mass       = 1.0f;
     rb_info.scale      = 1.0f;//0.15
-    rb_info.shape_path = "../../Media/standard/standard_cube.obj";
-    rb_info.sdf_path   = "../../Media/standard/standard_cube.sdf";
-    /*rb_info.shape_path = "../../Media/standard/standard_sphere.obj";
-    rb_info.sdf_path   = "../../Media/standard/standard_sphere.sdf";*/
+    /*rb_info.shape_path = "../../Media/standard/standard_cube.obj";
+    rb_info.sdf_path   = "../../Media/standard/standard_cube.sdf";*/
+    rb_info.shape_path = "../../Media/standard/standard_sphere.obj";
+    rb_info.sdf_path   = "../../Media/standard/standard_sphere.sdf";
+	/*rb_info.shape_path = "../../Media/car2/wheel.obj";
+	rb_info.sdf_path = "../../Media/car2/wheel.sdf";*/
+
     info.rigidbodies.push_back(rb_info);
 
     /*VPE::PhysIKARigidBodyCreateInfo sp_info{};
@@ -118,7 +121,7 @@ void                connector_use_demo::createScene()
     m_region = VPE::SandSimulationRegion::Create(info);
     m_car    = m_region->GetCar(0);
     auto rb  = m_region->GetRigidBody(0);
-    rb->SetGlobalPositionRotation({ 10, 0.2, 0 }, { 0, 0, 0, 1 });  //1,1,2
+    rb->SetGlobalPositionRotation({ 10+4, 1.0, 0 }, { 0, 0, 0, 1 });  //1,1,2
 
     class UpdateNode : public Node
     {
@@ -137,7 +140,6 @@ void                connector_use_demo::createScene()
             //VPE::Quat last_quat{};
             ////VPE::Vec3 last_pos2{};
             //VPE::Quat last_quat2{};
-
             //         auto      chassis = car->GetChassisRigidBody();
             //         chassis->GetGlobalPositionRotation(last_pos, last_quat);
             ////rigidbody->GetGlobalPositionRotation(last_pos2, last_quat2);
@@ -166,11 +168,9 @@ void                connector_use_demo::createScene()
             //	last_quat.y,
             //	last_quat.z,
             //	last_quat.w);
-
             //         print_rb_xform("Chassis", chassis);
             //         print_rb_xform("Cube", rigidbody);
-
-            //         total_time += dt;
+			//         total_time += dt;
             //cout<<total_time<<"\n";
             //if (last_pos.y < 0.75) {
             //	last_pos.y += 10*dt;
@@ -179,7 +179,6 @@ void                connector_use_demo::createScene()
             ////last_pos2.z= last_pos2.z + std::sin(total_time)/500;
             //         chassis->SetGlobalPositionRotation(last_pos, last_quat);
             ////rigidbody->SetGlobalPositionRotation(last_pos2, last_quat2);
-
             //         //rigidbody->SetGlobalPositionRotation(
             //             ////{ 0.5/*std::cos(total_time * 0.0000000001f* 0.0000000001f)*/, 0.5, 0.5/*std::sin(total_time * 0.001f)*/ },//old is *10
             //             ////{ 0, 0, 0, 0 }
@@ -215,8 +214,10 @@ void                connector_use_demo::createScene()
 
             rigidbody->SetGlobalPositionRotation(
 
-                { std::cos(total_time * 10.0f*10.0f)*10, /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f*10.0f)*10 /*0*/ },
-                { 0, 0, 0, 1 });
+                //{ std::cos(total_time * 10.0f*10.0f)*10, /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f*10.0f)*10 /*0*/ },
+                //{ 0, 0, 0, 1 });
+
+				{ std::cos(total_time * 10.0f*10.0f)*10+4, 1.0, 0 },	   { std::cos(total_time * 10.0f) , std::cos(total_time * 10.0f*10.0f) *10.0f, 0,1 });//角速度大了就会自动变高
         }
     };
 
@@ -228,4 +229,12 @@ void                connector_use_demo::createScene()
     root->addChild(updater);
 
     scene.setRootNode(root);
+
+	// Translate camera position
+	auto& camera_ = this->activeCamera();
+	//camera_.translate(Vector3f(0, 1.5, 3));
+	//camera_.setEyePostion(Vector3f(1.5, 1.5, 6));
+	Vector3f camPos(0, 1.5, 5);
+	camera_.lookAt(camPos, Vector3f(0, 0, 0), Vector3f(0, 1, 0));
+
 }

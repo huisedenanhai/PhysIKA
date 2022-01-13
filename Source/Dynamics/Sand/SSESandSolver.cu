@@ -112,7 +112,7 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
         float4 westflux  = d_flux_v(west, center);
         float4 southflux = d_flux_u(center, south);
         float4 northflux = d_flux_u(north, center);
-        float4 flux      = (eastflux - westflux + southflux - northflux) / 2.0f;
+		float4 flux = (eastflux - westflux + southflux - northflux);// / 2.0f;
 		// divergency(div,sandu)20220107
 		// also the velocity of sand going towards neighbor grids 
 		// in general, smaller flux is more robust, but looks worse
