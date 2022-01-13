@@ -330,6 +330,9 @@ __global__ void HFSRI_updateHeightField(
     gridpoint gp           = grid2Dread(sandinfo.data, tidx, tidy, sandinfo.pitch);
 	landheight(tidx, tidy) = min(gp.w, 1.5f);
 	sandheight(tidx, tidy) = min(gp.x, 1.5f);//height min-cut sheyigeshangxian 20220107
+	//landheight(tidx, tidy) = max(gp.w, 0.03);
+	//sandheight(tidx, tidy) = max(gp.x, 0.03);
+
 	/*if((!(gp.w < 0.2f)) || (!(gp.x < 0.2f)))
 		printf("x = %.10lf   w = %.10lf\n", gp.x, gp.w);*/
 }

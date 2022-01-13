@@ -143,8 +143,13 @@ __host__ __device__ inline float4 d_flux_v(float4 gpl, float4 gpr)
         return make_float4(0.0f);
     }
 
-    float a_plus  = fmaxf(fmaxf(vl + sqrtf(GRAVITY * (gpl.x /* + gpl.w*/)), vr + sqrtf(GRAVITY * (gpr.x /* + gpr.w*/))), 0);
-    float a_minus = fminf(fminf(vl - sqrtf(GRAVITY * (gpl.x /* + gpl.w*/)), vr - sqrtf(GRAVITY * (gpr.x /* + gpr.w*/))), 0);
+    float a_plus  = fmaxf(fmaxf(vl + sqrtf(GRAVITY * (gpl.x /* + gpl.w*/)), vr + sqrtf(GRAVITY * (gpr.x /* + gpr.w*/))), 0.0);
+    float a_minus = fminf(fminf(vl - sqrtf(GRAVITY * (gpl.x /* + gpl.w*/)), vr - sqrtf(GRAVITY * (gpr.x /* + gpr.w*/))), -0.0);
+
+	/*if(!(a_plus < 1.0f))
+		a_plus = 1.0f;
+	if (!(a_minus > -1.0f))
+		a_minus = -1.0f;*/
 
     float b = 0.5f * (gpl.w + gpr.w);
 

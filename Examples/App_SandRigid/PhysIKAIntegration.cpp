@@ -206,7 +206,7 @@ public:
         {
             return;
         }
-        for (int tmp = 0; tmp < 3; tmp++)  //20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid.
+        for (int tmp = 0; tmp < 1; tmp++)  //20220106 meet with Mr He , add this,finally solve the problem caused by smaller single grid.
         {                                  // loop for the integration of the height field: 20220107
                                            // the CFL condition constraints the velocity of sand, so we have to
                                            // run the integration more times when the velocity is too small

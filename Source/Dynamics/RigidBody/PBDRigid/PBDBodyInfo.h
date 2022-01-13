@@ -96,6 +96,16 @@ public:
 			lastVel[0], lastVel[1], lastVel[2], 
 			linVelocity[0], linVelocity[1], linVelocity[2]);
 
+		if (!(linVelocity.norm() < 20.0f))
+		{
+			linVelocity /= linVelocity.norm();
+			linVelocity *= 20.0f;
+
+			if (!(linVelocity.norm() < 25.0f))
+				linVelocity = Vector<Real, 3>(0);
+
+		}
+
         //if(invInertia[0]==0 || invInertia[1] != 0 && invInertia[1] != 0)
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -106,7 +116,7 @@ public:
         Vector<Real, 3> extT = externalTorque;
         pose.invRotate(extT);
         omegaI      = (extT - omegaI) * invInertia * dt;
-        angVelocity = angv + omegaI;
+        //angVelocity = angv + omegaI;
         pose.rotate(angVelocity);
 
         pose.position += linVelocity * dt;
@@ -165,13 +175,16 @@ public:
 
     COMM_FUNC void integrateForceToVelPos(const Vector<Real, 3>& extF, const Vector<Real, 3>& extT, Real dt)
     {
-
+		printf("178\n");
+		return;
         Vector<Real, 3> dlinv = extF * invMass * dt;
+
+		//if(!(dlinv.norm() < 1000.0f))
 
 		Vector<Real, 3> lastVel = linVelocity;
 		
-        linVelocity += dlinv;
-        pose.position += dlinv * dt;
+       // linVelocity += dlinv;
+       // pose.position += dlinv * dt;
 
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -183,9 +196,9 @@ public:
         pose.invRotate(extTLocal);
         dangv = (extTLocal /*- dangv*/) * invInertia * dt;
         pose.rotate(dangv);
-        angVelocity += dangv;
+        //angVelocity += dangv;
 
-        this->integrateRotation(dangv, dt);
+       // this->integrateRotation(dangv, dt);
     }
 
     COMM_FUNC void integrateVelocity(Real dt)
@@ -304,7 +317,7 @@ public:
     COMM_FUNC Vector<Real, 3> getVelocityAt(const Vector<Real, 3>& p)
     {
         Vector<Real, 3> v = p - pose.position;
-        v                 = angVelocity.cross(v);
+		v = Vector<Real, 3>(0);//angVelocity.cross(v);
         v += linVelocity;
         return v;
     }

@@ -101,10 +101,10 @@ void                connector_use_demo::createScene()
     rb_info.scale      = 1.0f;//0.15
     /*rb_info.shape_path = "../../Media/standard/standard_cube.obj";
     rb_info.sdf_path   = "../../Media/standard/standard_cube.sdf";*/
-    rb_info.shape_path = "../../Media/standard/standard_sphere.obj";
-    rb_info.sdf_path   = "../../Media/standard/standard_sphere.sdf";
-	/*rb_info.shape_path = "../../Media/car2/wheel.obj";
-	rb_info.sdf_path = "../../Media/car2/wheel.sdf";*/
+    /*rb_info.shape_path = "../../Media/standard/standard_sphere.obj";
+    rb_info.sdf_path   = "../../Media/standard/standard_sphere.sdf";*/
+	rb_info.shape_path = "../../Media/car2/wheel.obj";
+	rb_info.sdf_path = "../../Media/car2/wheel.sdf";
 
     info.rigidbodies.push_back(rb_info);
 
@@ -121,7 +121,7 @@ void                connector_use_demo::createScene()
     m_region = VPE::SandSimulationRegion::Create(info);
     m_car    = m_region->GetCar(0);
     auto rb  = m_region->GetRigidBody(0);
-    rb->SetGlobalPositionRotation({ 10+4, 1.0, 0 }, { 0, 0, 0, 1 });  //1,1,2
+    rb->SetGlobalPositionRotation({ 1, 1.0, 4 }, { 0, 0, 0, 1 });  //1,1,2
 
     class UpdateNode : public Node
     {
@@ -217,8 +217,11 @@ void                connector_use_demo::createScene()
                 //{ std::cos(total_time * 10.0f*10.0f)*10, /*0.25+*/ /*std::cos(total_time * 10.0f)+*/ 0.2f, std::sin(total_time * 10.0f*10.0f)*10 /*0*/ },
                 //{ 0, 0, 0, 1 });
 
-				{ std::cos(total_time * 10.0f*10.0f)*10+4, 1.0, 0 },	   { std::cos(total_time * 10.0f) , std::cos(total_time * 10.0f*10.0f) *10.0f, 0,1 });//角速度大了就会自动变高
-        }
+				//无旋转不会导致崩
+				//{ std::cos(total_time * 10.0f*10.0f)*10, 1.0, 4 },	   { /*std::cos(total_time  * 10.0f* 10.0f)*/0 , /*std::cos(total_time * 10.0f*10.0f)*/0, 0 ,1 });//角速度大了就会自动变高
+				//有旋转会崩
+				{ std::cos(total_time * 10.0f*10.0f * 10) , 1.0, 4 },       { std::cos(total_time  * 10.0f* 10.0f*10.0f) , std::cos(total_time * 10.0f*10.0f*10.0f), 0 ,1 });//角速度大了就会自动变高
+		}
     };
 
     auto root          = m_region->GetRoot();
