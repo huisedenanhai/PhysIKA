@@ -343,7 +343,7 @@ void HeightFieldSandRigidInteraction::_updateSandHeightField()
         return;
 
     uint3 gsize = { m_psandInfo->nx, m_psandInfo->ny, 1 };
-    cuExecute2D(gsize, HFSRI_updateHeightField, *m_sandHeight, *m_landHeight, *m_psandInfo);
+    //cuExecute2D(gsize, HFSRI_updateHeightField, *m_sandHeight, *m_landHeight, *m_psandInfo);
 }
 
 void HeightFieldSandRigidInteraction::_updateGridParticleInfo(int i)

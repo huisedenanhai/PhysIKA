@@ -164,17 +164,19 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
         }
 
         // boundary condition: vn = 0
-        if (x == 0 || x == width - 1)
-        {
-            //u_center.y = 0;
-            u_center.z = 0;
-        }
-        if (y == 0 || y == height - 1)
-        {
-            u_center.y = 0;
-            //u_center.z = 0;
-        }
+        //if (x == 0 || x == width - 1)
+        //{
+        //    //u_center.y = 0;
+        //    u_center.z = 0;
+        //}
+        //if (y == 0 || y == height - 1)
+        //{
+        //    u_center.y = 0;
+        //    //u_center.z = 0;
+        //}
         u_center.w = center.w;
+
+		u_center.w = min(u_center.w, 1.2f);
 
         //if (u_center.x > 0.21)
         //{
@@ -338,6 +340,7 @@ __global__ void g_updateVelocity(DeviceHeightField1d staticHeight, float4* grid_
             //u_center.z = 0;
         }
         u_center.w = center.w;
+		u_center.x = min(u_center.x, 1.2f);
 
         //if (abs(u_center.y) > 1 || abs(u_center.z) > 1)
         //{
