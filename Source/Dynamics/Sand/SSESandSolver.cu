@@ -340,8 +340,11 @@ __global__ void g_updateVelocity(DeviceHeightField1d staticHeight, float4* grid_
             //u_center.z = 0;
         }
         u_center.w = center.w;
-		u_center.x = min(u_center.x, 1.2f);
-
+		if(u_center.x > 1.2f)
+		{ 
+			u_center.y = u_center.z = u_center.w = 0.0f;
+			u_center.x = 1.2f;
+		}
         //if (abs(u_center.y) > 1 || abs(u_center.z) > 1)
         //{
         //	printf("   May be error:  %lf %lf %lf,   befor:  %lf %lf %lf \n", u_center.x, u_center.y, u_center.z,

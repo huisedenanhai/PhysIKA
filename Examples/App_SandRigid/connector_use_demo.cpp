@@ -121,7 +121,7 @@ void                connector_use_demo::createScene()
     m_region = VPE::SandSimulationRegion::Create(info);
     m_car    = m_region->GetCar(0);
     auto rb  = m_region->GetRigidBody(0);
-    rb->SetGlobalPositionRotation({ 1, 1.0, 4 }, { 0, 0, 0, 1 });  //1,1,2
+    rb->SetGlobalPositionRotation({ 1, 0.5, 4 }, { 0, 0, 0, 1 });  //1,1,2
 
     class UpdateNode : public Node
     {
@@ -220,7 +220,7 @@ void                connector_use_demo::createScene()
 				//无旋转不会导致崩
 				//{ std::cos(total_time * 10.0f*10.0f)*10, 1.0, 4 },	   { /*std::cos(total_time  * 10.0f* 10.0f)*/0 , /*std::cos(total_time * 10.0f*10.0f)*/0, 0 ,1 });//角速度大了就会自动变高
 				//有旋转会崩
-				{ std::cos(total_time * 10.0f*10.0f * 10) , 1.0, 4 },       { std::cos(total_time  * 10.0f* 10.0f*10.0f) , std::cos(total_time * 10.0f*10.0f*10.0f), 0 ,1 });//角速度大了就会自动变高
+				{ std::cos(total_time * 10.0f*10.0f * 10*10) , 0.5, 4 },       { std::cos(total_time  * 10.0f* 10.0f*10.0f) , std::cos(total_time * 10.0f*10.0f*10.0f), 0 ,1 });//角速度大了就会自动变高
 		}
     };
 
