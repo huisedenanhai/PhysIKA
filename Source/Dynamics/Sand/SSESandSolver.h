@@ -99,7 +99,7 @@ private:
     int m_threadBlocky = 16;
 
     float m_CFLNumber   = 0.1f;  // 0.1f;
-    float m_maxTimeStep = 0.0001f;//0.04f,0.0001f,后又加俩0
+    float m_maxTimeStep = 0.04f;//0.04f,0.0001f,后又加俩0//魔性版本写的是0.0001f，每帧特别慢,好的版本是0.04f！！！！！！改了就好了220728
 
     Reduction<float>*  m_CFLReduction = 0;
     DeviceArray<float> m_velocityNorm;

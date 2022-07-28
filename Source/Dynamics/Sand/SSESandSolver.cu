@@ -190,8 +190,8 @@ __global__ void g_sandAdvection(float4* grid_next, int width, int height, float 
 
 void SSESandSolver::advection(float deltime)
 {
-	clock_t start, end;
-	start = clock();
+	//clock_t start, end;
+	//start = clock();
 
     dim3 gridDims, blockDims;
     int  in_Nx = m_SandInfo.nx, in_Ny = m_SandInfo.ny;
@@ -204,7 +204,7 @@ void SSESandSolver::advection(float deltime)
     // cudaThreadSynchronize();
     cuSynchronize();
 
-	end = clock();
+	//end = clock();
 	//printf("ssesolver=%f", double(end - start) / 1000);
     // bind texture
     //SSEUtil::bindTexture2D(texture_grid, m_SandInfo.data, m_SandInfo.nx, m_SandInfo.ny, m_SandInfo.pitch);

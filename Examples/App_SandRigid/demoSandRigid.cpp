@@ -1823,14 +1823,6 @@ void                  DemoHeightFieldcraft::createScene()
 	psampler->m_landHeight = &sandGrid.m_landHeight;
 	psampler->Initalize(sandinfo.nx, sandinfo.ny, 3, 2, sandinfo.griddl);
 
-
-
-
-
-
-
-
-
 	//--------------------------------------------------------------------
 	/// ------  Rigid ------------
 	std::shared_ptr<PBDSolverNode> rigidSim = std::make_shared<PBDSolverNode>();

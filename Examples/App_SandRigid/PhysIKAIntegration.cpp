@@ -5,7 +5,7 @@
 #else
 #define VIWO_PROFILE_SCOPE_SAMPLE(tag)
 #endif
-
+#include<iostream>
 #include <vector>
 #include <Dynamics/RigidBody/RigidUtil.h>
 #include <Dynamics/RigidBody/PBDRigid/PBDSolverNode.h>
@@ -28,6 +28,8 @@
 #include "GUI/GlutGUI/GLApp.h"
 
 #include "math.h"
+#include <ctime>
+
 
 #if PHYSIKA_INTEGRATION_INIT_RENDER > 0
 #include <Rendering/RigidMeshRender.h>
@@ -36,6 +38,8 @@
 
 namespace VPE {
 using namespace PhysIKA;
+
+clock_t start,end;
 
 namespace {
 Vector3f ToPhysIKA(const Vec3& v)
@@ -196,7 +200,8 @@ public:
     void advance(Real dt) override
     {
         VIWO_PROFILE_SCOPE_SAMPLE("Advance Height Field Sand Solver");
-
+		//在这计时看看。
+		start=clock();
         auto sandSolver     = getSandSolver();
         auto interactSolver = getInteractionSolver();
         auto rigidSolver    = getRigidSolver();
@@ -236,7 +241,10 @@ public:
             VIWO_PROFILE_SCOPE_SAMPLE("Update Velocity");
             sandSolver->updateVeclocity(dt);
         }
+	end=clock();
+	//cout<<"魏克名"<<end-start<<endl;	这里根本没跑呀
     }
+	
 };
 
 class DummyPBDSolverNode : public PBDSolverNode

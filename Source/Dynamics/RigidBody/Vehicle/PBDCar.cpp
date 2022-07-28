@@ -222,7 +222,7 @@ void PBDCar::backward(Real dt)
 //左打轮，按下a则调用此函数
 void PBDCar::goLeft(Real dt)
 {
-    currentSteering -= steeringSpeed * dt;//打轮速度 乘时间//魏克名在这加了个“-”，不加的话，导致a为向右打轮，d为向左
+    currentSteering += steeringSpeed * dt;//打轮速度 乘时间//魏克名在这加了个“-”，不加的话，导致a为向右打轮，d为向左
 	//轮胎偏转角不能超出上下界
     currentSteering = currentSteering > steeringLowerBound ? currentSteering : steeringLowerBound;
     currentSteering = currentSteering < steeringUpperBound ? currentSteering : steeringUpperBound;
