@@ -90,6 +90,26 @@ int main()
 			break;
 		}
 
+		case 11: {//四旋翼无人机。车改成飞机！调用PBDCraft文件
+			DemoHeightFieldcraft* demo = DemoHeightFieldcraft::getInstance();
+			demo->createScene();
+			demo->run();
+			break;
+		}
+
+		//slippery
+		case 12: {//湿滑地
+			DemoHeightFieldSlippery* demo = DemoHeightFieldSlippery::getInstance();
+			demo->createScene();
+			demo->run();
+			break;
+		}
+
+
+
+
+
+
         default:
             break;
     }

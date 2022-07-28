@@ -88,7 +88,7 @@ void                        DemoParticleSandMultiRigid2::createScene(/*double *d
     HostHeightField1d landHeight;//landHeight，下面几行的位置是导入地面文件
     landHeight.resize(sandinfo.nx, sandinfo.ny);//设置硬地面大小
     landHeight.setSpace(sandinfo.griddl, sandinfo.griddl);//设置硬地面高度场网格长宽
-	printf("wkm%d\n%d ", landHeight.Nx(), landHeight.Ny());//这里就是256 256 
+	//printf("wkm%d\n%d ", landHeight.Nx(), landHeight.Ny());//这里就是256 256 
 	//png导入高度场数据
     HeightFieldLoader hfloader;//来自HeightFieldLoader.h//这个类是高度场导入
     double            maxh = 1;//高度最大值
@@ -113,7 +113,7 @@ void                        DemoParticleSandMultiRigid2::createScene(/*double *d
 	//	}
 	//}
 
-	printf("wkm%d\n%d ", landHeight.Nx(), landHeight.Ny());//是256
+	//printf("wkm%d\n%d ", landHeight.Nx(), landHeight.Ny());//是256
     psandSolver->setLand(landHeight);//挂载上，上面循环赋上的地面高度信息
 
     // Land mesh.4硬地面网格生成并渲染
@@ -182,27 +182,7 @@ void                        DemoParticleSandMultiRigid2::createScene(/*double *d
         }
     }
 
-    // Boundary particle.9边界区域沙粒子，没啥用，注释掉了
-    //for (int i = -5; i < sandinfo.nx + 5; ++i)
-    //{
-    //    for (int j = -5; j < sandinfo.ny + 5; ++j)
-    //    {
-    //        if (i >= 0 && i < sandinfo.nx && j >= 0 && j < sandinfo.ny) continue;//原区域内直接跳过，此块代码只处理边界
-    //        Vector3d centerij = landHeight.gridCenterPosition(i, j);
-    //        for (int ii = 0; ii < 2; ++ii)
-    //            for (int jj = 0; jj < 2; ++jj)
-    //            {
-    //                Vector3d curp = centerij;
-    //                curp[0] -= sandinfo.griddl / 2.0;
-    //                curp[2] -= sandinfo.griddl / 2.0;
-    //                curp[0] += ii * spacing + spacing / 2.0 * (1.0 + u(e));
-    //                curp[2] += jj * spacing + spacing / 2.0 * (1.0 + u(e));
-    //                particlePos.push_back(curp);
-    //                particleType.push_back(ParticleType::BOUNDARY);
-    //                particleMass.push_back(mb);
-    //            }
-    //    }
-    //}
+
 
     std::vector<Vector3d> particleVel(particlePos.size());//每个网格处都应该有个粒子速度，所以是个vector，速度是三维向量
 	//下面这个结点很重要，设置粒子全部信息，从0处开始传址。来自PBDSandSolver.cu
@@ -314,7 +294,7 @@ void                        DemoParticleSandMultiRigid2::createScene(/*double *d
 
     m_car->carPosition = Vector3f(0.35, 0.7, 1.5) + chassisCenter;//设置车子初始位置！！！！！
 	m_car2->carPosition = Vector3f(0.35, 0.7, 0.1) + chassisCenter;//设置车子初始位置！！！！！
-	std::printf("wkm%f %f %f %f", m_car->wheelRelRotation[0], m_car->wheelRelRotation[1], m_car->wheelRelRotation[2], m_car->wheelRelRotation[3]);
+	//std::printf("wkm%f %f %f %f", m_car->wheelRelRotation[0], m_car->wheelRelRotation[1], m_car->wheelRelRotation[2], m_car->wheelRelRotation[3]);
 	//四个轮子的相对位置和相对旋转，要粘在接口函数GetWheelPositionRotation里
     m_car->wheelRelPosition[0] = Vector3f(-0.3f, -0.2, -0.4f) * scale1d + wheelCenter[0] - chassisCenter;
     m_car->wheelRelPosition[1] = Vector3f(+0.3f, -0.2, -0.4f) * scale1d + wheelCenter[1] - chassisCenter;
@@ -420,132 +400,6 @@ void                        DemoParticleSandMultiRigid2::createScene(/*double *d
     // Build.组装
     m_car->build();
 	m_car2->build();
-
-
-	////-------------------------------------------------------
-	////碰撞之前准备，目前依旧穿模
-	//
-	//printf("initialize OK\n");
-	//m_groundRigidInteractor = std::make_shared<HeightFieldPBDInteractionNode>();
- //   //m_groundRigidInteractor->setRigidBodySystem(m_car->m_rigidSystem);
- //   //m_groundRigidInteractor->setSize(sandinfo.nx, sandinfo.ny, sandinfo.griddl, sandinfo.griddl);
- //   //m_groundRigidInteractor->getSolver()->m_numSubstep          = 5;
- //   //m_groundRigidInteractor->getSolver()->m_numContactSolveIter = 20;
-
- //   m_groundRigidInteractor->getSolver()->setUseGPU(false);
- //   root->addChild(m_groundRigidInteractor);//注释掉就完全不调用碰撞了
- //   m_groundRigidInteractor->setDt(0.016);
-
-
-	////DeviceHeightField1d& terrain  = m_groundRigidInteractor->getHeightField();//这仨注释掉试试
- ////   DeviceHeightField1d* terrain_ = &terrain;
- ////   Function1Pt::copy(*terrain_, landHeight);
- //   m_groundRigidInteractor->setDetectionMethod(HeightFieldPBDInteractionNode::HFDETECTION::POINTVISE);//注释掉看看
- //   //m_groundRigidInteractor->setDetectionMethod(HeightFieldTerrainRigidInteractionNode::HFDETECTION::FACEVISE);
- //   //terrain.setOrigin(0, 0, 0);
-	//
-	////上面是碰撞之前准备
-
-
-	////尝试加碰撞
-	//{//m_car底盘
- //       auto pointset = TypeInfo::cast<PointSet<DataType3f>>(m_car->getChassis()->getTopologyModule());//原来是getChassis()
-	//	if (pointset)
-	//	{
-	//		std::shared_ptr<TOrientedBox3D<float>> pobb = std::make_shared<TOrientedBox3D<float>>();
-	//		pobb->u = Vector3f(1, 0, 0);
-	//		pobb->v = Vector3f(0, 1, 0);
-	//		pobb->w = Vector3f(0, 0, 1);
-
-	//		//DeviceArray<Vector3f>& vertices = pointset->getPoints();
-	//		this->computeAABB(pointset, pobb->center, pobb->extent);
-
-	//		if (m_groundRigidInteractor == NULL)
-	//			m_groundRigidInteractor = std::make_shared<HeightFieldPBDInteractionNode>();//cy，发现这个是个空指针，加了这2行
-	//		auto pdetector = m_groundRigidInteractor->getRigidContactDetector();//把这两行注释掉，就没异常了，但穿模
-	//		printf("&&&&&&&&&&&&&&&&&&& call ADD HERE!\n");
-	//		pdetector->addCollidableObject(m_car->m_chassis, pobb);//bug就在这！pobb没push进去！
-
-	//		//wkm：是不是因为没有调用doCollision之类的
-	//	}//异常再cy修好之后，仍穿模，因为遗漏了源代码中关于m_groundRigidInteractor的一系列语句，包括连在root上
-	//	else
-	//		printf("PointSet ERROR!\n");
-	//}
-	//
-	////m_car轮子
-	//for (int i = 0; i < 4; ++i){
- //       auto pwheel   = m_car->getWheels(i);
- //       auto pointset = TypeInfo::cast<PointSet<DataType3f>>(pwheel->getTopologyModule());
- //       if (pointset)
- //       {
- //           std::shared_ptr<TOrientedBox3D<float>> pobb = std::make_shared<TOrientedBox3D<float>>();
- //           //pobb->center = chaCenter;
- //           //pobb->extent = chaSize;
- //           pobb->u = Vector3f(1, 0, 0);
- //           pobb->v = Vector3f(0, 1, 0);
- //           pobb->w = Vector3f(0, 0, 1);
-
- //           //DeviceArray<Vector3f>& vertices = pointset->getPoints();
- //           this->computeAABB(pointset, pobb->center, pobb->extent);
-
-	//		if (m_groundRigidInteractor == NULL)
-	//			m_groundRigidInteractor = std::make_shared<HeightFieldPBDInteractionNode>();//cy
-
- //           auto pdetector = m_groundRigidInteractor->getRigidContactDetector();
- //           pdetector->addCollidableObject(pwheel, pobb);
- //       }
-	//}
-	//m_groundRigidInteractor->addChild(m_car);//加了这两行，之前漏了
-
-	//{//m_car2底盘
- //       auto pointset = TypeInfo::cast<PointSet<DataType3f>>(m_car2->getChassis()->getTopologyModule());//原来是getChassis()
- //       if (pointset)
- //       {
- //           std::shared_ptr<TOrientedBox3D<float>> pobb = std::make_shared<TOrientedBox3D<float>>();
- //           pobb->u = Vector3f(1, 0, 0);
- //           pobb->v = Vector3f(0, 1, 0);
- //           pobb->w = Vector3f(0, 0, 1);
-
- //           //DeviceArray<Vector3f>& vertices = pointset->getPoints();
- //           this->computeAABB(pointset, pobb->center, pobb->extent);
-
-	//		if (m_groundRigidInteractor == NULL)
-	//			m_groundRigidInteractor = std::make_shared<HeightFieldPBDInteractionNode>();//cy
- //           auto pdetector = m_groundRigidInteractor->getRigidContactDetector();//把这两行注释掉，就没异常了，但穿模
- //           pdetector->addCollidableObject(m_car2->m_chassis, pobb);//这个函数里面有两个push_back
- //       }
- //   }
-
-	////m_car2轮子
-	//for (int i = 0; i < 4; ++i)
- //   {
- //       auto pwheel   = m_car2->getWheels(i);
- //       auto pointset = TypeInfo::cast<PointSet<DataType3f>>(pwheel->getTopologyModule());
- //       if (pointset)
- //       {
- //           std::shared_ptr<TOrientedBox3D<float>> pobb = std::make_shared<TOrientedBox3D<float>>();
- //           //pobb->center = chaCenter;
- //           //pobb->extent = chaSize;
- //           pobb->u = Vector3f(1, 0, 0);
- //           pobb->v = Vector3f(0, 1, 0);
- //           pobb->w = Vector3f(0, 0, 1);
-
- //           //DeviceArray<Vector3f>& vertices = pointset->getPoints();
- //           this->computeAABB(pointset, pobb->center, pobb->extent);
-
-	//		if (m_groundRigidInteractor == NULL)
-	//			m_groundRigidInteractor = std::make_shared<HeightFieldPBDInteractionNode>();//cy
-
- //           auto pdetector = m_groundRigidInteractor->getRigidContactDetector();
- //           pdetector->addCollidableObject(pwheel, pobb);
- //       }
- //   }
-	//
-	//m_groundRigidInteractor->addChild(m_car2);
-	////上面是加碰撞--------------------------------------------------------------------------------------------------
-
-
-
 
     // Add visualization module and topology module.添加可视化模块和拓扑模块。先是底盘，再是轮子//注意这个部分要放在碰撞模块后面，要不然会发生vector越界
     m_car->m_chassis->setTopologyModule(chassisTri);//拓扑模块。啥用？啥意思？？？？

@@ -830,12 +830,12 @@ void SandInteractionForceSolver::computeParticleInteractVelocity(int i, Real dt)
 
     if (m_useStickParticleVelUpdate)
     {
-		printf("yes \n");
+		//printf("yes \n");
         cuExecute(m_particlePos->size(), SandIFS_updateParticleVel_Stick, m_dVel, *m_particleVel, *m_particleMass, *m_particlePos, m_topH, m_botH, m_topNormal, m_botNormal, *m_land, *m_body, i, m_sampleSize, m_rho, m_e, m_CsHorizon, m_CsVertical);
     }
     else
     {
-		printf("yes2 \n");
+		//printf("yes2 \n");
         cuExecute(m_particlePos->size(), SandIFS_updateParticleVel, m_dVel, *m_particleVel, *m_particleMass, *m_particlePos, m_topH, m_botH, m_topNormal, m_botNormal, *m_land, *m_body, i, m_sampleSize, m_rho, m_e, m_CsHorizon, m_CsVertical, m_Cprob);
     }
 }

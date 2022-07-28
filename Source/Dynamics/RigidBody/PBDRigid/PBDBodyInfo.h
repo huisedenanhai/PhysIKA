@@ -92,9 +92,9 @@ public:
 		
         prevPose = pose;
         linVelocity += externalForce * invMass * dt;
-		printf("velocity from integrate: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n", 
-			lastVel[0], lastVel[1], lastVel[2], 
-			linVelocity[0], linVelocity[1], linVelocity[2]);
+		//printf("velocity from integrate: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n", 
+			//lastVel[0], lastVel[1], lastVel[2], 
+			//linVelocity[0], linVelocity[1], linVelocity[2]);
 
 		if (!(linVelocity.norm() < 20.0f))
 		{
@@ -133,9 +133,9 @@ public:
 		Vector<Real, 3> lastVel = linVelocity;
 		
         linVelocity += externalForce * invMass * dt;
-		printf("velocity from integrate Force 123: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
-			lastVel[0], lastVel[1], lastVel[2],
-			linVelocity[0], linVelocity[1], linVelocity[2]);
+		//printf("velocity from integrate Force 123: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			//lastVel[0], lastVel[1], lastVel[2],
+			//linVelocity[0], linVelocity[1], linVelocity[2]);
         //if(invInertia[0]==0 || invInertia[1] != 0 && invInertia[1] != 0)
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -156,9 +156,9 @@ public:
 		Vector<Real, 3> lastVel = linVelocity;
 		
         linVelocity += extF * invMass * dt;
-		printf("velocity from integrate Force 143: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
-			lastVel[0], lastVel[1], lastVel[2],
-			linVelocity[0], linVelocity[1], linVelocity[2]);
+		//printf("velocity from integrate Force 143: %.3lf %.3lf %.3lf      %.3lf %.3lf %.3lf \n",
+			//lastVel[0], lastVel[1], lastVel[2],
+			//linVelocity[0], linVelocity[1], linVelocity[2]);
         //if(invInertia[0]==0 || invInertia[1] != 0 && invInertia[1] != 0)
         Vector<Real, 3> angv = angVelocity;
         pose.invRotate(angv);  // to local.
@@ -175,7 +175,7 @@ public:
 
     COMM_FUNC void integrateForceToVelPos(const Vector<Real, 3>& extF, const Vector<Real, 3>& extT, Real dt)
     {
-		printf("178\n");
+		//printf("178\n");
 		return;
         Vector<Real, 3> dlinv = extF * invMass * dt;
 

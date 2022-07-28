@@ -98,7 +98,7 @@ public:
 public:
    
 public:
-    int m_subStep      = 1;
+    int m_subStep      = 1;//1
     int m_subRigidStep = 20;
 
     double m_gravity = 9.8;
