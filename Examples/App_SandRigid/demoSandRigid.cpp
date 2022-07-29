@@ -1877,7 +1877,8 @@ void                  DemoHeightFieldcraft::createScene()
 			//Vector3f boundingsize;//这个是死代码吧，后面再也没有了，魏注释掉了
 
 			// Chassis mesh.底盘网格和包围盒
-			ObjFileLoader chassisLoader("../../Media/car2/chassis_cube.obj");//载入底盘文件
+			//ObjFileLoader chassisLoader("../../Media/car2/chassis_cube.obj");//载入底盘文件
+			ObjFileLoader chassisLoader("../../Media/craft/siyiwurenji.obj");//载入底盘文件
 
 			chassisTri = std::make_shared<TriangleSet<DataType3f>>();//底盘上设置三角网格
 			chassisTri->setPoints(chassisLoader.getVertexList());
