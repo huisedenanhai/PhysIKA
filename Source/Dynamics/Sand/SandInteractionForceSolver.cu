@@ -1,9 +1,7 @@
 #include "Dynamics/Sand/SandInteractionForceSolver.h"
-
 #include <thrust/execution_policy.h>
 #include <thrust/reduce.h>
 #include <cmath>
-
 #include "Core/Utility/CTimer.h"
 #include "Core/Utility/CudaRand.h"
 
@@ -160,7 +158,7 @@ __global__ void SandIFS_computeBuoyancy(
 
         //Vector3d force(0, buoF[botid], 0);
         pointd[1]   = hbot;
-        buoT[botid] = (pointd - bodyi.pose.position).cross(buoF[botid]);
+        buoT[botid] = (pointd - bodyi.pose.position).cross(buoF[botid])*0;
 
         //Vector3d tmpv = buoF[botid];// (pointd - body[bodyid].pose.position);
         //if (buoF[botid][0] != 0 || buoF[botid][1] != 0 || buoF[botid][2] != 0)
@@ -168,16 +166,16 @@ __global__ void SandIFS_computeBuoyancy(
         //	printf("%d: F, %lf;   val, %lf %lf %lf\n", tid, buoF[tid*2][1], htop, hbot, hland);
         //}
         relvDf[botid] = buoF[botid].dot(bodyi.linVelocity - parVel[tid])
-                        + buoT[botid].dot(bodyi.angVelocity);
+                        /*+ buoT[botid].dot(bodyi.angVelocity)*/;
     }
     else
     {
         buoF[tid * 2]   = Vector3d();
-        buoT[tid * 2]   = Vector3d();
+        //buoT[tid * 2]   = Vector3d();
         relvDf[tid * 2] = 0.0;
     }
     buoF[tid * 2 + 1]   = Vector3d();
-    buoT[tid * 2 + 1]   = Vector3d();
+    //buoT[tid * 2 + 1]   = Vector3d();
     relvDf[tid * 2 + 1] = 0.0;
 }
 
@@ -466,7 +464,7 @@ __global__ void SandIFS_DragForceVel(
         relp[1]       = botH[tid];
         relp -= body[bodyid].pose.position;
         Vector3d relv = body[bodyid].linVelocity + body[bodyid].angVelocity.cross(relp);
-        relv -= velArr[tid];
+        //relv -= velArr[tid];
 
         double effAi = botN[tid].dot(relv) * effA / (abs(botN[tid][1]) + 0.05);
 
@@ -584,6 +582,10 @@ void SandInteractionForceSolver::computeSingleDragForce(int i, Real dt)
     //double alpha = 1.0;
     dragF *= alpha;
     dragT *= alpha;
+	//截断2000
+	/*dragT[0] = dragT[0] > 2000 ? 2000.0 : dragT[0];
+	dragT[1] = dragT[1] > 2000 ? 2000.0 : dragT[1];
+	dragT[2] = dragT[2] > 2000 ? 2000.0 : dragT[2];*/
 
     if (false)
     {
@@ -659,17 +661,18 @@ __global__ void SandIFS_updateParticleVel(
     posi[1]         = botH[tid];
     Vector3d velObj = body[bodyid].getVelocityAt(posi);
 
-	if (!(velObj.norm() < 300.0f)) //prevent nan velocities
-		velObj = Vector3d(0);
+	//3个截断
+	//if (!(velObj.norm() < 300.0f)) //prevent nan velocities
+	//	velObj = Vector3d(0);
 
-	if (velObj.norm() > 25.0f) //damp velocity for height field 20220107
-	{
-		velObj /= velObj.norm();
-		velObj *= 25.0f;
-		//格子本身速度没改，这是刚体本身，格子速度过大未解决
-		//velObj /= velObj.norm();
-		//velObj *= 10.0f;
-	}
+	//if (velObj.norm() > 25.0f) //damp velocity for height field 20220107
+	//{
+	//	velObj /= velObj.norm();
+	//	velObj *= 25.0f;
+	//	//格子本身速度没改，这是刚体本身，格子速度过大未解决
+	//	//velObj /= velObj.norm();
+	//	//velObj *= 10.0f;
+	//}
 	//角速度截断,,,get函数是哪个？我发现底层文件里没写呀！
 	//body[bodyid]->angVelocity = Vector3d();
 
@@ -713,8 +716,9 @@ __global__ void SandIFS_updateParticleVel(
 	/*if (dvel[1] < -hsand / 0.005f)
 		dvel[1] = -hsand / 0.005f;*/
 
-	if (hsand < 0.02f)
-		dvel -= dvel;
+	//截断
+	//if (hsand < 0.02f)
+	//	dvel -= dvel;
     dVel[tid] = dvel;
 
 	//printf("dvel = %.3lf  %.3lf  %.3lf\n", dvel[0], dvel[1], dvel[2]);
@@ -780,14 +784,15 @@ __global__ void SandIFS_updateParticleVel_Stick(
         curp[1]         = curh;
         Vector3d velObj = /*body[bodyid].linVelocity;*/ body[bodyid].getVelocityAt(curp);
 
-		if (!(velObj.norm() < 1000000.0f)) //prevent nan velocities
-			velObj = Vector3d(0);
+		//截断
+		//if (!(velObj.norm() < 1000000.0f)) //prevent nan velocities
+		//	velObj = Vector3d(0);
+		//if (velObj.norm() > 15.0f)
+		//{ 
+		//	velObj /= velObj.norm();
+		//	velObj *= 15.0f;
+		//}
 
-		if (velObj.norm() > 15.0f)
-		{ 
-			velObj /= velObj.norm();
-			velObj *= 15.0f;
-		}
         dvel += velObj * sampleDl;
 
         curh -= sampleDl;
@@ -999,10 +1004,6 @@ __global__ void SandIFS_smoothVelocityChange(
     if (weight > EPSILON /*&& nbSize>5*/)
     {
         dv /= weight;
-
-		
-
-
         parVel[tid] += dv;
 
         /*if (dv[0] < -0.05)
@@ -1021,8 +1022,8 @@ __global__ void SandIFS_directUpdateVelocityChange(
 
 
     parVel[tid] += dVel[tid];
-
-	parVel[tid] *= 0.99f;
+	//截断
+	//parVel[tid] *= 0.99f;
 
     
 }
@@ -1125,20 +1126,20 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
 
 	//printf("force norm = %.10lf    %.10lf\n", F.norm(), T.norm());
 
-	printf("body lin Vel: %.10lf %.10lf %.10lf\n", 
-		pbody->linVelocity[0],
-		pbody->linVelocity[1],
-		pbody->linVelocity[2]
-		);
+	//printf("body lin Vel: %.10lf %.10lf %.10lf\n", 
+	//	pbody->linVelocity[0],
+	//	pbody->linVelocity[1],
+	//	pbody->linVelocity[2]
+	//	);
 
-	printf("body F: %.10lf %.10lf %.10lf\n",
-		F[0],
-		F[1],
-		F[2]
-	);
-
-	if(!(pbody->linVelocity.norm() < 10000.0f))
-		pbody->linVelocity = Vector3d();
+	//printf("body F: %.10lf %.10lf %.10lf\n",
+	//	F[0],
+	//	F[1],
+	//	F[2]
+	//);
+	//截断
+	//if(!(pbody->linVelocity.norm() < 10000.0f))
+	//	pbody->linVelocity = Vector3d();
 
     if (tmpv.dot(pbody->linVelocity) < - EPSILON && linvnorm < /*m_gravity*dt * 0.5*/ maxlinv)
     {
@@ -1151,17 +1152,19 @@ void SandInteractionForceSolver::_stableDamping(int i, Vector3d& F, Vector3d& T,
     tmpv            = (T * pbody->invInertia * dt);
     double maxangv  = tmpv.norm();
     //if (tmpv.dot(pbody->angVelocity) < 0 && angvnorm < maxangv)
+
 	//just do here 20220112
+
     {
-		printf("do here\n");
+		//printf("do here\n");
         pbody->angVelocity = Vector3d();
         T                  = Vector3d();
     }
-	printf("body ang Vel: %.10lf %.10lf %.10lf %.10lf \n",
-		pbody->angVelocity[0],//actually zero.
-		pbody->angVelocity[1],
-		pbody->angVelocity[2]/*,
-		pbody->angVelocity[3]*/);
+	//printf("body ang Vel: %.10lf %.10lf %.10lf %.10lf \n",
+	//	pbody->angVelocity[0],//actually zero.
+	//	pbody->angVelocity[1],
+	//	pbody->angVelocity[2]/*,
+	//	pbody->angVelocity[3]*/);
 }
 
 void SandInteractionForceSolver::_copyHostBodyToGPU(int i)

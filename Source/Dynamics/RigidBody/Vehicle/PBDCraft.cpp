@@ -94,6 +94,8 @@ namespace PhysIKA {
 		if (forwardForce<10000 && forwardForce>-10000) {
 			forwardForce += forwardForceAcc * (dt >= 0 ? 1 : -1);//前向牵引力！//前向牵引力增加量forwardForceAcc在demoparticlesand里面设置的是1000
 		}
+			//Vector3f a = this->m_chassis->getGlobalR();//有了！位置和角度更新封装在rigidbody2或者更底层，这里如此可以调用！！
+			//std::cout <<a[0]<<a[1]<<a[2]<<std::endl;
 		/*
 		倾角=(wheelRelPosition[0] - wheelRelPosition[1])叉乘(wheelRelPosition[2] - wheelRelPosition[1])点乘{0,1,0}/向量的模的乘积
 		*/
@@ -102,7 +104,7 @@ namespace PhysIKA {
 		//float jiao = acos(dianji / faxiangliang.norm());
 		////相当于是要求一个二面角（线面角），不用四元数。由轮子位置得到垂直向上向量，再求此向量与010的夹角。小于15度即是if条件
 		////给倾角力矩
-		//printf("%f,%f,%f\n", faxiangliang[0], faxiangliang[1], faxiangliang[2]);//说明，这个法向量有问题。知道了，开始运动之后四轮位置没有写回来
+		//printf("%f,%f,%f\n", faxiangliang[0], faxiangliang[1], faxiangliang[2]);//说明，这个法向量有问题。知道了，开始运动之后四轮位置没有写回来!!!!!应该在advance函数里写会来！怎么写看看深层刚体类。
 		//printf("faxiangliang.dot({ 0.0,1.0,0.0 })=%f\n", faxiangliang.dot({ 0.0,1.0,0.0 }));
 		//printf("faxiangliang.norm()=%f\n", faxiangliang.norm());
 		//printf("倾角大小=%f\n",jiao);
@@ -166,6 +168,7 @@ namespace PhysIKA {
 
 	void PBDCraft::zizhuan(Real dt) {
 		upTorque = { 0,1000,0 };
+		//std::cout<<"这里跑了呀"<<std::endl;
 
 	}
 

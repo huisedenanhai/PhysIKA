@@ -678,7 +678,184 @@ public:
     bool m_rigidVisible = true;
 };
 
+class DemoHeightFieldMudLandRigid : public GLApp
+{
 
+private:
+	DemoHeightFieldMudLandRigid()
+	{
+		setKeyboardFunction(DemoHeightFieldMudLandRigid::demoKeyboardFunction);
+		createWindow(1024, 400);
+	}
+	static DemoHeightFieldMudLandRigid* m_instance;
+
+public:
+	static DemoHeightFieldMudLandRigid* getInstance()
+	{
+		if (m_instance == 0)
+			m_instance = new DemoHeightFieldMudLandRigid;
+		return m_instance;
+	}
+
+	void createScene();
+
+	void run()
+	{
+		Log::setOutput("console_log.txt");
+		Log::setLevel(Log::Info);
+		Log::sendMessage(Log::Info, "Simulation begin");
+
+		mainLoop();
+
+		Log::sendMessage(Log::Info, "Simulation end!");
+	}
+
+	static void demoKeyboardFunction(unsigned char key, int x, int y)
+	{
+
+		{
+			if (!m_instance)
+				return;
+			switch (key)
+			{
+			case 'v':
+				m_instance->_changeVisibility();
+
+				break;
+			default:
+				GLApp::keyboardFunction(key, x, y);
+				break;
+			}
+		}
+	}
+
+private:
+	void _changeVisibility()
+	{
+		if (m_rigidVisible)
+		{
+			for (int i = 0; i < m_rigids.size(); ++i)
+			{
+				m_rigids[i]->deleteVisualModule(m_rigidRenders[i]);
+			}
+		}
+		else
+		{
+			for (int i = 0; i < m_rigids.size(); ++i)
+			{
+				m_rigids[i]->addVisualModule(m_rigidRenders[i]);
+			}
+		}
+		m_rigidVisible = !m_rigidVisible;
+	}
+
+public:
+	std::vector<RigidBody2_ptr>                   m_rigids;
+	std::vector<std::shared_ptr<RigidMeshRender>> m_rigidRenders;
+
+	bool m_rigidVisible = true;
+
+
+
+	
+
+};
+
+class DemoHeightFieldMudLandCar : public GLApp
+{
+
+private:
+	DemoHeightFieldMudLandCar()
+	{
+		setKeyboardFunction(DemoHeightFieldMudLandCar::demoKeyboardFunction);
+		createWindow(1024, 400);
+	}
+	static DemoHeightFieldMudLandCar* m_instance;
+
+public:
+	static DemoHeightFieldMudLandCar* getInstance()
+	{
+		if (m_instance == 0)
+			m_instance = new DemoHeightFieldMudLandCar;
+		return m_instance;
+	}
+
+	void createScene();
+
+	void run()
+	{
+		Log::setOutput("console_log.txt");
+		Log::setLevel(Log::Info);
+		Log::sendMessage(Log::Info, "Simulation begin");
+
+		mainLoop();
+
+		Log::sendMessage(Log::Info, "Simulation end!");
+	}
+
+	static void demoKeyboardFunction(unsigned char key, int x, int y)
+	{
+
+		{
+			
+			if (!m_instance)
+				return;
+			switch (key)
+			{
+			case 'a':
+				m_instance->m_car->goLeft(0.016);//这个使小车左打轮
+				break;
+			case 'd':
+				m_instance->m_car->goRight(0.016);
+				break;
+			case 'w':
+				m_instance->m_car->forward(0.016);//这个赋予小车前向牵引
+				break;
+			case 's':
+				m_instance->m_car->backward(0.016);
+				break;
+			case 'v':
+				m_instance->_changeVisibility();
+
+				break;
+			default:
+				GLApp::keyboardFunction(key, x, y);
+				break;
+			}
+		}
+	}
+
+private:
+	void _changeVisibility()
+	{
+		if (m_rigidVisible)
+		{
+			for (int i = 0; i < m_rigids.size(); ++i)
+			{
+				m_rigids[i]->deleteVisualModule(m_rigidRenders[i]);
+			}
+		}
+		else
+		{
+			for (int i = 0; i < m_rigids.size(); ++i)
+			{
+				m_rigids[i]->addVisualModule(m_rigidRenders[i]);
+			}
+		}
+		m_rigidVisible = !m_rigidVisible;
+	}
+
+public:
+	std::vector<RigidBody2_ptr>                   m_rigids;
+	std::vector<std::shared_ptr<RigidMeshRender>> m_rigidRenders;
+
+	bool m_rigidVisible = true;
+	
+
+	std::shared_ptr<PBDCar>                       m_car;
+	
+	
+};
 
 class DemoHeightFieldcraft : public GLApp
 {

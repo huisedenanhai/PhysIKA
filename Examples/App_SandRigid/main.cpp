@@ -26,6 +26,11 @@ int main()
     std::cout << "   3:  Sand-Rigid Height Field" << std::endl;
     std::cout << "   4:  two car on particle sand." << std::endl;
     std::cout << "   5:  connector" << std::endl;
+	std::cout << "   9:  泥地-单刚体" << std::endl;
+    std::cout << "   10: 泥地-车" << std::endl;
+    std::cout << "   11: 四旋翼无人机" << std::endl;
+    std::cout << "   12: 湿滑地" << std::endl;
+
     int caseid = 0;
     std::cin >> caseid;
 
@@ -90,7 +95,7 @@ int main()
 			break;
 		}
 
-		case 11: {//四旋翼无人机。车改成飞机！调用PBDCraft文件
+		case 11: {//四旋翼无人机
 			DemoHeightFieldcraft* demo = DemoHeightFieldcraft::getInstance();
 			demo->createScene();
 			demo->run();
@@ -105,6 +110,20 @@ int main()
 			break;
 		}
 
+
+		case 9: {//泥地-单刚体
+			DemoHeightFieldMudLandRigid* demo = DemoHeightFieldMudLandRigid::getInstance();
+			demo->createScene();
+			demo->run();
+			break;
+		}
+
+		case 10: {//泥地-车
+			DemoHeightFieldMudLandCar* demo = DemoHeightFieldMudLandCar::getInstance();
+			demo->createScene();
+			demo->run();
+			break;
+		}
 
 
 
