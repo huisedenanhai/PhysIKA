@@ -479,7 +479,7 @@ __global__ void g_updateVelocity_mud(
 
 		kc = -100.0;
 
-		fc = kc * pow((1 - wa), 2)*wl*(wl - 1)*pow(2.71828, (-5.0 / 6.0*wl));
+		fc = kc * pow((1.0 - wa), 2.0)*wl*(wl - 1)*pow(2.71828, (-5.0 / 6.0*wl));
 		
 		float4 u_center;
 		u_center.x = center.x;
