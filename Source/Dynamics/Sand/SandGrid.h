@@ -149,10 +149,11 @@ public:
 
     int block_x = 16;  // block size of GPU thread
     int block_y = 16;  // block size of GPU thread
+    //the 3 var didnot initialize in old version
+    float slide = 0.0;
+    float drag  = 0.0;
+    float mu    = 0.0;
 
-    float slide;
-    float drag;
-    float mu;
     float m_sandRho = 5.0;
 
     float dl = 1.0;

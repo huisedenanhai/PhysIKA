@@ -94,11 +94,14 @@ namespace PhysIKA {
 		if (forwardForce<10000 && forwardForce>-10000) {
 			forwardForce += forwardForceAcc * (dt >= 0 ? 1 : -1);//前向牵引力！//前向牵引力增加量forwardForceAcc在demoparticlesand里面设置的是1000
 		}
-			//Vector3f a = this->m_chassis->getGlobalR();//有了！位置和角度更新封装在rigidbody2或者更底层，这里如此可以调用！！
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//Vector3f a = this->m_chassis->getGlobalR();//※有了！位置和角度更新封装在rigidbody2或者更底层，这里如此可以调用！！！！！！！回收来一波getGlobalQ，
 			//std::cout <<a[0]<<a[1]<<a[2]<<std::endl;
+
 		/*
 		倾角=(wheelRelPosition[0] - wheelRelPosition[1])叉乘(wheelRelPosition[2] - wheelRelPosition[1])点乘{0,1,0}/向量的模的乘积
 		*/
+
 		//Vector3f faxiangliang = (wheelRelPosition[0] - wheelRelPosition[1]).cross(wheelRelPosition[3] - wheelRelPosition[1]);
 		//float dianji = faxiangliang.dot({ 0.0,1.0,0.0 });
 		//float jiao = acos(dianji / faxiangliang.norm());

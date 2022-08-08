@@ -240,7 +240,7 @@ private:
     int              m_neighborSize = 2;
     //double m_smoothLength;
     double m_rho0 = 1000.0;
-    double m_m0;
+    double m_m0         = 1.0;
     int    m_subStepNum = 4;
 
     double m_mu = 0.1;  // 0.12;
