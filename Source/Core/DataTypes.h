@@ -66,6 +66,6 @@ inline const char* DataType3d::getName()
     return "DataType3d";
 }
 
-#define EMPTY -1
+//#define EMPTY -1
 
 }  // namespace PhysIKA
