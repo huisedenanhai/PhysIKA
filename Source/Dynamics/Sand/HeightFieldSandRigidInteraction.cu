@@ -92,6 +92,25 @@ bool HeightFieldSandRigidInteraction::initialize()
 
 void HeightFieldSandRigidInteraction::advance(Real dt)
 {
+
+    //de oldbig bug
+    if (m_rigidSolver && m_sandSolver)
+    //if(false)
+    {
+        m_interactSolver->setPreBodyInfo();
+    }
+    if (m_rigidSolver)
+    {
+        Real rdt = dt / m_subRigidStep;
+        for (int i = 0; i < m_subRigidStep; ++i)
+        {
+            m_rigidSolver->forwardSubStepGPU2(rdt);
+        }
+        m_rigidSolver->updateGPUToCPUBody();
+    }
+    //----------------------
+
+
     CTimer timer;
     timer.start();
 
@@ -101,9 +120,6 @@ void HeightFieldSandRigidInteraction::advance(Real dt)
         for (int i = 0; i < m_subStep; ++i)
         {
             this->advectSubStep(subdt);
-
-            //float subdt2 = m_sandSolver->getMaxTimeStep();
-            //printf("  Cur max time step:  %f\n", subdt2);
         }
     }
     else
@@ -189,21 +205,22 @@ void HeightFieldSandRigidInteraction::advectSubStep(Real dt)
         //m_sandSolver->stepSimulation(dt);
     }
 
-    if (m_rigidSolver && m_sandSolver)
-    //if(false)
-    {
-        m_interactSolver->setPreBodyInfo();
-    }
+    //deoldbigbug-delete
+    //if (m_rigidSolver && m_sandSolver)
+    ////if(false)
+    //{
+    //    m_interactSolver->setPreBodyInfo();
+    //}
 
-    if (m_rigidSolver)
-    {
-        Real rdt = dt / m_subRigidStep;
-        for (int i = 0; i < m_subRigidStep; ++i)
-        {
-            m_rigidSolver->forwardSubStepGPU(rdt);
-        }
-        m_rigidSolver->updateGPUToCPUBody();
-    }
+    //if (m_rigidSolver)
+    //{
+    //    Real rdt = dt / m_subRigidStep;
+    //    for (int i = 0; i < m_subRigidStep; ++i)
+    //    {
+    //        m_rigidSolver->forwardSubStepGPU(rdt);
+    //    }
+    //    m_rigidSolver->updateGPUToCPUBody();
+    //}
 
     if (m_rigidSolver && m_sandSolver)
     //if(false)
